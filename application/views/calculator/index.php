@@ -19,7 +19,7 @@
                 <button type="button" class="history-btn" onclick="clearHistory()">Clear</button>
             </div>
         </div>
-e
+
         <div class="conversion-panel" id="conversionPanel">
             <div class="conversion-header">
                 <h3>Unit Converter</h3>
