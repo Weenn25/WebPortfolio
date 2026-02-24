@@ -281,35 +281,14 @@ class Library extends CI_Controller {
         $data['user'] = $this->Library_model->get_user($user_id);
         
         // Get member_id from email
-        $this->db->where('email', $data['user']['email']);
-        $member = $this->db->get('members')->row_array();
+        $member = $this->Library_model->get_member_by_email($data['user']['email']);
         $member_id = $member ? $member['id'] : 0;
         
         // Get user statistics
-        // Count borrowed books (not returned)
-        $this->db->where('member_id', $member_id);
-        $this->db->where('status !=', 'returned');
-        $data['borrowed_count'] = $this->db->count_all_results('circulation');
-        
-        // Count overdue books
-        $this->db->where('member_id', $member_id);
-        $this->db->where('due_date <', date('Y-m-d'));
-        $this->db->where('status', 'borrowed');
-        $data['overdue_count'] = $this->db->count_all_results('circulation');
-        
-        // Total available book copies in library (sum of available quantities)
-        $query = $this->db->select_sum('available_quantity')
-                          ->where('archived', 0)
-                          ->get('books');
-        $result = $query->row_array();
-        $data['available_count'] = $result['available_quantity'] ? (int)$result['available_quantity'] : 0;
-        
-        // Total book copies in library (sum of total quantities)
-        $query = $this->db->select_sum('total_quantity')
-                          ->where('archived', 0)
-                          ->get('books');
-        $result = $query->row_array();
-        $data['total_books'] = $result['total_quantity'] ? (int)$result['total_quantity'] : 0;
+        $data['borrowed_count'] = $this->Library_model->get_user_borrowed_count($member_id);
+        $data['overdue_count'] = $this->Library_model->get_user_overdue_count($member_id);
+        $data['available_count'] = $this->Library_model->get_total_available_books();
+        $data['total_books'] = $this->Library_model->get_total_books_quantity();
         
         $this->load->view('library/templates/header', $data);
         $this->load->view('library/user-dashboard', $data);
@@ -381,20 +360,11 @@ class Library extends CI_Controller {
         
         // Get member_id from user email
         $user = $this->Library_model->get_user($user_id);
-        $this->db->where('email', $user['email']);
-        $member = $this->db->get('members')->row_array();
+        $member = $this->Library_model->get_member_by_email($user['email']);
         $member_id = $member ? $member['id'] : 0;
         
         // Get borrowed books (not returned)
-        $data['borrowed_books'] = $this->db
-            ->select('c.*, b.title as book_title, b.author, b.id as book_id')
-            ->from('circulation c')
-            ->join('books b', 'c.book_id = b.id')
-            ->where('c.member_id', $member_id)
-            ->where('c.status !=', 'returned')
-            ->order_by('c.borrow_date', 'DESC')
-            ->get()
-            ->result_array();
+        $data['borrowed_books'] = $this->Library_model->get_user_borrowed_books($member_id);
         
         $this->load->view('library/templates/header', $data);
         $this->load->view('library/my_books', $data);
@@ -419,8 +389,7 @@ class Library extends CI_Controller {
         
         // Get member_id from user email
         $user = $this->Library_model->get_user($user_id);
-        $this->db->where('email', $user['email']);
-        $member = $this->db->get('members')->row_array();
+        $member = $this->Library_model->get_member_by_email($user['email']);
         $member_id = $member ? $member['id'] : 0;
 
         $per_page = 10;
@@ -430,33 +399,11 @@ class Library extends CI_Controller {
         }
         $offset = ($page - 1) * $per_page;
 
-        $total_history = $this->db
-            ->from('circulation c')
-            ->where('c.member_id', $member_id)
-            ->count_all_results();
-
-        $returned_count = $this->db
-            ->from('circulation c')
-            ->where('c.member_id', $member_id)
-            ->where('c.status', 'returned')
-            ->count_all_results();
-
-        $borrowed_count = $this->db
-            ->from('circulation c')
-            ->where('c.member_id', $member_id)
-            ->where('c.status', 'borrowed')
-            ->count_all_results();
-        
-        // Get borrowing history (paginated)
-        $data['history'] = $this->db
-            ->select('c.*, b.title as book_title, b.author, b.id as book_id')
-            ->from('circulation c')
-            ->join('books b', 'c.book_id = b.id')
-            ->where('c.member_id', $member_id)
-            ->order_by('c.borrow_date', 'DESC')
-            ->limit($per_page, $offset)
-            ->get()
-            ->result_array();
+        // Get statistics and history from model
+        $total_history = $this->Library_model->count_user_history($member_id);
+        $returned_count = $this->Library_model->count_user_returned($member_id);
+        $borrowed_count = $this->Library_model->count_user_borrowed($member_id);
+        $data['history'] = $this->Library_model->get_user_history($member_id, $per_page, $offset);
 
         $data['history_total'] = $total_history;
         $data['history_returned'] = $returned_count;
@@ -497,8 +444,7 @@ class Library extends CI_Controller {
         }
 
         // Find member record by email (users and members are linked by email)
-        $this->db->where('email', $user['email']);
-        $member = $this->db->get('members')->row_array();
+        $member = $this->Library_model->get_member_by_email($user['email']);
 
         // If no member record exists, create one
         if (!$member) {
@@ -512,8 +458,7 @@ class Library extends CI_Controller {
             $this->Library_model->add_member($member_data);
             
             // Get the newly created member
-            $this->db->where('email', $user['email']);
-            $member = $this->db->get('members')->row_array();
+            $member = $this->Library_model->get_member_by_email($user['email']);
         }
 
         $member_id = $member['id'];
@@ -531,10 +476,7 @@ class Library extends CI_Controller {
         }
 
         // Check if user already has this book borrowed
-        $this->db->where('member_id', $member_id);
-        $this->db->where('book_id', $book_id);
-        $this->db->where('status !=', 'returned');
-        $existing_borrow = $this->db->get('circulation')->row_array();
+        $existing_borrow = $this->Library_model->has_borrowed_book($member_id, $book_id);
 
         if ($existing_borrow) {
             $this->session->set_flashdata('error', 'You already have this book borrowed');
@@ -580,12 +522,11 @@ class Library extends CI_Controller {
         $user = $this->Library_model->get_user($user_id);
 
         // Get member_id from email
-        $this->db->where('email', $user['email']);
-        $member = $this->db->get('members')->row_array();
+        $member = $this->Library_model->get_member_by_email($user['email']);
         $member_id = $member ? $member['id'] : 0;
 
         // Get circulation record
-        $circulation = $this->db->where('id', $circulation_id)->get('circulation')->row_array();
+        $circulation = $this->Library_model->get_circulation_record($circulation_id);
         
         if (!$circulation) {
             $this->session->set_flashdata('error', 'Borrow record not found');
@@ -632,12 +573,11 @@ class Library extends CI_Controller {
         $user = $this->Library_model->get_user($user_id);
 
         // Get member_id from email
-        $this->db->where('email', $user['email']);
-        $member = $this->db->get('members')->row_array();
+        $member = $this->Library_model->get_member_by_email($user['email']);
         $member_id = $member ? $member['id'] : 0;
 
         // Get circulation record
-        $circulation = $this->db->where('id', $circulation_id)->get('circulation')->row_array();
+        $circulation = $this->Library_model->get_circulation_record($circulation_id);
         
         if (!$circulation) {
             $this->session->set_flashdata('error', 'Borrow record not found');
@@ -651,8 +591,7 @@ class Library extends CI_Controller {
         }
 
         // Clear the fine
-        $data = array('fine_amount' => 0.00, 'updated_at' => date('Y-m-d H:i:s'));
-        if ($this->db->where('id', $circulation_id)->update('circulation', $data)) {
+        if ($this->Library_model->clear_fine($circulation_id)) {
             $this->session->set_flashdata('success', 'Fine cleared successfully!');
         } else {
             $this->session->set_flashdata('error', 'Failed to clear fine. Please try again.');
@@ -673,11 +612,7 @@ class Library extends CI_Controller {
             $tab_id = $this->input->post('tab_id'); // Get tab ID from form
             
             // Check if user exists
-            $this->db->select('*');
-            $this->db->from('users');
-            $this->db->where('username', $username);
-            $query = $this->db->get();
-            $user = $query->row_array();
+            $user = $this->Library_model->get_user_by_username($username);
             
             if (!$user) {
                 $this->session->set_flashdata('login_error', "Wrong username");
@@ -771,12 +706,10 @@ class Library extends CI_Controller {
         $email = $this->input->post('email');
         
         // Check if username already exists
-        $this->db->where('username', $username);
-        $username_exists = $this->db->count_all_results('users') > 0;
+        $username_exists = $this->Library_model->username_exists($username);
         
         // Check if email already exists
-        $this->db->where('email', $email);
-        $email_exists = $this->db->count_all_results('users') > 0;
+        $email_exists = $this->Library_model->email_exists($email);
         
         if ($username_exists && $email_exists) {
             echo json_encode(['success' => false, 'message' => 'Username and email already taken']);
@@ -814,6 +747,148 @@ class Library extends CI_Controller {
 
         $data = [];
         $this->load->view('library/auth/register', $data);
+    }
+
+    /**
+     * Forgot Password
+     */
+    public function forgot_password() {
+        if ($this->session->userdata('library_user_id')) {
+            redirect('library/dashboard');
+        }
+
+        $data = [];
+
+        if ($this->input->post()) {
+            $email = trim($this->input->post('email'));
+
+            // Check if email exists
+            $user = $this->Library_model->get_user_by_email($email);
+
+            if (!$user) {
+                $data['error'] = 'No account found with this email address';
+            } else {
+                // Generate reset token
+                $token = $this->Library_model->generate_reset_token($email);
+                $reset_link = site_url('library/reset-password/' . $token);
+
+                // Send email with reset link
+                $this->load->library('email');
+                
+                $this->email->from('noreply@library.local', 'Library Management System');
+                $this->email->to($email);
+                $this->email->subject('Password Reset Request - Library Management System');
+                
+                // Create HTML email with professional design
+                $html_message = '
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <!-- Header -->
+                        <div style="background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: white; padding: 30px; text-align: center;">
+                            <h1 style="margin: 0; font-size: 28px;">Library Management System</h1>
+                            <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">Password Reset Request</p>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div style="padding: 40px 30px;">
+                            <p style="margin-top: 0;">Hello <strong>' . htmlspecialchars($user['first_name']) . '</strong>,</p>
+                            
+                            <p>You requested a password reset for your Library account. Click the button below to reset your password.</p>
+                            
+                            <p style="text-align: center; margin: 35px 0;">
+                                <a href="' . $reset_link . '" style="display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: transform 0.2s;">
+                                    Reset Password
+                                </a>
+                            </p>
+                            
+                            <p style="color: #666; font-size: 13px; text-align: center;">
+                                This link will expire in <strong>1 hour</strong>
+                            </p>
+                            
+                            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                            
+                            <p style="color: #999; font-size: 12px;">If you did not request this password reset, please ignore this email or contact support if you have concerns.</p>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div style="background: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #ddd;">
+                            <p style="margin: 0; color: #666; font-size: 12px;">
+                                &copy; 2026 Library Management System. All rights reserved.
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                ';
+                
+                $this->email->set_mailtype('html');
+                $this->email->message($html_message);
+                
+                if ($this->email->send()) {
+                    $data['success'] = 'Password reset link has been sent to your email. Please check your inbox.';
+                } else {
+                    $data['error'] = 'Failed to send reset email. Please try again later.';
+                    // Log the email error
+                    log_message('error', 'Email error: ' . $this->email->print_debugger());
+                }
+            }
+        }
+
+        $this->load->view('library/auth/forgot_password', $data);
+    }
+
+    /**
+     * Reset Password
+     */
+    public function reset_password($token = null) {
+        if ($this->session->userdata('library_user_id')) {
+            redirect('library/dashboard');
+        }
+
+        if (!$token) {
+            $this->session->set_flashdata('error', 'Invalid reset link');
+            redirect('library/login');
+        }
+
+        // Verify token
+        $user = $this->Library_model->verify_reset_token($token);
+
+        if (!$user) {
+            $this->session->set_flashdata('error', 'Reset link has expired. Please try again.');
+            redirect('library/forgot-password');
+        }
+
+        $data = ['token' => $token];
+
+        if ($this->input->post()) {
+            $password = $this->input->post('password');
+            $password_confirm = $this->input->post('password_confirm');
+
+            // Validate passwords
+            if (empty($password) || empty($password_confirm)) {
+                $data['error'] = 'Please fill in all fields';
+            } elseif (strlen($password) < 6) {
+                $data['error'] = 'Password must be at least 6 characters long';
+            } elseif ($password !== $password_confirm) {
+                $data['error'] = 'Passwords do not match';
+            } else {
+                // Reset the password
+                if ($this->Library_model->reset_password($token, $password)) {
+                    $this->session->set_flashdata('success', 'Password has been reset successfully. You can now login.');
+                    redirect('library/login');
+                } else {
+                    $data['error'] = 'Failed to reset password. Please try again.';
+                }
+            }
+        }
+
+        $this->load->view('library/auth/reset_password', $data);
     }
 
     /**
@@ -1074,8 +1149,7 @@ class Library extends CI_Controller {
             }
 
             // Check if ISBN already exists
-            $this->db->where('isbn', $isbn);
-            $existing_book = $this->db->get('books')->row_array();
+            $existing_book = $this->Library_model->get_book_by_isbn($isbn);
             
             if ($existing_book) {
                 $this->session->set_flashdata('error', 'A book with this ISBN already exists');
@@ -1353,8 +1427,7 @@ class Library extends CI_Controller {
 
             // Check if email already exists (if provided)
             if (!empty($email)) {
-                $this->db->where('email', $email);
-                $existing = $this->db->get('members')->row_array();
+                $existing = $this->Library_model->get_member_by_email($email);
                 if ($existing) {
                     $this->session->set_flashdata('error', 'A member with this email already exists');
                     redirect('library/members/add');
@@ -1466,9 +1539,7 @@ class Library extends CI_Controller {
 
             // Check if email exists for another member (if provided)
             if (!empty($email)) {
-                $this->db->where('email', $email);
-                $this->db->where('id !=', $id);
-                $existing = $this->db->get('members')->row_array();
+                $existing = $this->Library_model->get_member_by_email_excluding($email, $id);
                 if ($existing) {
                     $this->session->set_flashdata('error', 'A member with this email already exists');
                     redirect('library/members/edit/' . $id);
@@ -1519,9 +1590,7 @@ class Library extends CI_Controller {
         }
 
         // Check if member has active borrowed books
-        $this->db->where('member_id', $id);
-        $this->db->where('status !=', 'returned');
-        $active_borrows = $this->db->count_all_results('circulation');
+        $active_borrows = $this->Library_model->count_active_borrows($id);
 
         if ($active_borrows > 0) {
             $this->session->set_flashdata('error', "Cannot deactivate this member. They have {$active_borrows} book(s) currently borrowed. Please ensure all books are returned first.");
@@ -1551,7 +1620,7 @@ class Library extends CI_Controller {
         }
 
         $data['page_title'] = 'Inactive Members';
-        $data['members'] = $this->db->where('is_active', 0)->order_by('updated_at', 'DESC')->get('members')->result_array();
+        $data['members'] = $this->Library_model->get_inactive_members();
         
         $this->load->view('library/templates/header', $data);
         $this->load->view('library/members/inactive', $data);
@@ -1578,8 +1647,7 @@ class Library extends CI_Controller {
         }
 
         // Activate member
-        $data = array('is_active' => 1, 'updated_at' => date('Y-m-d H:i:s'));
-        if ($this->db->where('id', $id)->update('members', $data)) {
+        if ($this->Library_model->activate_member($id)) {
             $this->session->set_flashdata('success', 'Member activated successfully');
         } else {
             $this->session->set_flashdata('error', 'Failed to activate member');
@@ -1608,8 +1676,7 @@ class Library extends CI_Controller {
             return;
         }
         
-        $this->db->where('username', $username);
-        $exists = $this->db->count_all_results('users') > 0;
+        $exists = $this->Library_model->username_exists($username);
         
         echo json_encode(['exists' => $exists]);
     }
@@ -1635,8 +1702,7 @@ class Library extends CI_Controller {
             return;
         }
         
-        $this->db->where('email', $email);
-        $exists = $this->db->count_all_results('users') > 0;
+        $exists = $this->Library_model->email_exists($email);
         
         echo json_encode(['exists' => $exists]);
     }
@@ -1660,6 +1726,87 @@ class Library extends CI_Controller {
         $this->load->view('library/templates/header', $data);
         $this->load->view('library/circulation/index', $data);
         $this->load->view('library/templates/footer');
+    }
+
+    /**
+     * Archive Circulation Record
+     */
+    public function archive_circulation($id) {
+        if (!$this->session->userdata('library_user_id')) {
+            redirect('library/login');
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            redirect('library/user-dashboard');
+        }
+
+        // Get circulation record
+        $circulation = $this->Library_model->get_circulation_record($id);
+        if (!$circulation) {
+            $this->session->set_flashdata('error', 'Circulation record not found');
+            redirect('library/circulation');
+        }
+
+        // Archive the record
+        if ($this->Library_model->archive_circulation($id)) {
+            $this->session->set_flashdata('success', 'Circulation record archived successfully');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to archive circulation record');
+        }
+        
+        redirect('library/circulation');
+    }
+
+    /**
+     * View Archived Circulation Records
+     */
+    public function archived_circulations() {
+        if (!$this->session->userdata('library_user_id')) {
+            redirect('library/login');
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            redirect('library/user-dashboard');
+        }
+
+        $data['page_title'] = 'Archived Circulations';
+        $data['circulations'] = $this->Library_model->get_archived_circulations();
+        
+        $this->load->view('library/templates/header', $data);
+        $this->load->view('library/circulation/archived', $data);
+        $this->load->view('library/templates/footer');
+    }
+
+    /**
+     * Restore Archived Circulation Record
+     */
+    public function restore_circulation($id) {
+        if (!$this->session->userdata('library_user_id')) {
+            redirect('library/login');
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            redirect('library/user-dashboard');
+        }
+
+        // Get circulation record
+        $circulation = $this->Library_model->get_circulation_record($id);
+        if (!$circulation) {
+            $this->session->set_flashdata('error', 'Circulation record not found');
+            redirect('library/circulation/archived');
+        }
+
+        // Restore the record
+        if ($this->Library_model->restore_circulation($id)) {
+            $this->session->set_flashdata('success', 'Circulation record restored successfully');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to restore circulation record');
+        }
+        
+        redirect('library/circulation/archived');
     }
 
     // ========================================

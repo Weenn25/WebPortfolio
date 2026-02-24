@@ -1,12 +1,32 @@
 <div class="circulation-container">
     <div class="page-header mb-4">
         <div class="d-flex justify-content-between align-items-center">
-            <h1><i class="bi bi-arrow-left-right"></i> Circulation Management</h1>
-            <a href="<?= site_url('library/circulation/archived') ?>" class="btn btn-secondary">
-                <i class="bi bi-archive"></i> View Archived
+            <h1><i class="bi bi-archive"></i> Archived Circulation Records</h1>
+            <a href="<?= site_url('library/circulation') ?>" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Active
             </a>
         </div>
     </div>
+
+    <?php if ($this->session->flashdata('success')): ?>
+        <script>
+            iziToast.success({
+                title: 'Success',
+                message: '<?= $this->session->flashdata('success') ?>',
+                position: 'topRight'
+            });
+        </script>
+    <?php endif; ?>
+
+    <?php if ($this->session->flashdata('error')): ?>
+        <script>
+            iziToast.error({
+                title: 'Oops!',
+                message: '<?= $this->session->flashdata('error') ?>',
+                position: 'topRight'
+            });
+        </script>
+    <?php endif; ?>
 
     <?php if(!empty($circulations)): ?>
         <!-- Search and Sort Controls -->
@@ -37,7 +57,7 @@
         </div>
         <div class="table-responsive">
             <table class="table table-hover table-striped">
-                <thead style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white;">
+                <thead style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white;">
                     <tr>
                         <th>ID</th>
                         <th>Book Title</th>
@@ -87,13 +107,8 @@
                             <span class="badge <?= $status_class ?>"><?= $status_text ?></span>
                         </td>
                         <td>
-                            <?php if(empty($circ['return_date'])): ?>
-                            <a href="<?= site_url('library/circulation/mark_returned/' . $circ['id']) ?>" class="btn btn-sm btn-success" title="Mark as Returned" onclick="return confirm('Mark this book as returned?')">
-                                <i class="bi bi-check-circle"></i>
-                            </a>
-                            <?php endif; ?>
-                            <a href="<?= site_url('library/circulation/archive/' . $circ['id']) ?>" class="btn btn-sm btn-danger" title="Archive" onclick="return confirm('Are you sure you want to archive this record?')">
-                                <i class="bi bi-archive"></i>
+                            <a href="<?= site_url('library/circulation/restore/' . $circ['id']) ?>" class="btn btn-sm btn-success" title="Restore" onclick="return confirm('Are you sure you want to restore this record?')">
+                                <i class="bi bi-arrow-counterclockwise"></i>
                             </a>
                         </td>
                     </tr>
@@ -114,7 +129,7 @@
         </div>
     <?php else: ?>
         <div class="alert alert-info" role="alert">
-            <i class="bi bi-info-circle"></i> No circulation records found. <a href="<?= site_url('library/circulation/new') ?>">Create a new transaction</a> to get started.
+            <i class="bi bi-info-circle"></i> No archived circulation records found.
         </div>
     <?php endif; ?>
 </div>
@@ -130,57 +145,53 @@
     }
 
     .header-line {
-        border: 3px solid #3498db;
+        border: 3px solid #6c757d;
         margin-bottom: 30px;
     }
 
     .table {
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
 
     .table thead th {
         font-weight: 600;
-        padding: 15px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
         border: none;
     }
 
-    .table tbody td {
-        padding: 12px 15px;
-        vertical-align: middle;
+    .table tbody tr {
+        transition: all 0.2s ease;
     }
 
     .table tbody tr:hover {
         background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     .btn-sm {
-        margin: 0 2px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
     }
 
-    .search-sort-controls {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
+    .badge {
+        padding: 0.5em 0.85em;
+        font-weight: 600;
+        border-radius: 6px;
+    }
+
+    .search-sort-controls .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
     }
 
     .results-info {
-        text-align: right;
-    }
-
-    .no-results {
-        text-align: center;
-        padding: 40px;
-    }
-
-    .pagination-controls {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
-        text-align: center;
+        color: #6c757d;
     }
 
     .pagination {
@@ -188,19 +199,19 @@
     }
 
     .pagination .page-link {
-        color: #3498db;
+        color: #6c757d;
         border-color: #ddd;
     }
 
     .pagination .page-link:hover {
-        color: #2980b9;
+        color: #495057;
         background-color: #f0f0f0;
         border-color: #ddd;
     }
 
     .pagination .page-item.active .page-link {
-        background-color: #3498db;
-        border-color: #3498db;
+        background-color: #6c757d;
+        border-color: #6c757d;
     }
 
     .pagination .page-item.disabled .page-link {
@@ -242,7 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchesSearch = !searchTerm || 
                                  bookTitle.includes(searchTerm) || 
                                  memberName.includes(searchTerm);
-            
             const matchesStatus = !statusFilter || status === statusFilter;
             
             return matchesSearch && matchesStatus;
@@ -250,32 +260,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updatePagination() {
-        filteredRows = getFilteredRows();
+        const filteredRows = getFilteredRows();
         const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
         
-        // Ensure current page is within bounds
-        if (currentPage > totalPages && totalPages > 0) {
-            currentPage = totalPages;
-        } else if (currentPage < 1) {
-            currentPage = 1;
-        }
-
-        // Hide all rows
+        // Hide all rows first
         circulationRows.forEach(row => row.style.display = 'none');
-
-        // Show rows for current page
+        
+        // Calculate start and end indices
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
         
-        const rowsToDisplay = filteredRows.slice(startIndex, endIndex);
-        rowsToDisplay.forEach(row => row.style.display = '');
-
-        // Update result count and page display
+        // Show only the rows for the current page
+        filteredRows.slice(startIndex, endIndex).forEach(row => {
+            row.style.display = '';
+        });
+        
+        // Update result count
         resultCount.textContent = filteredRows.length;
         
-        // Update pagination display
+        // Update page number display
         if (totalPages > 0) {
-            pageNumberDisplay.textContent = currentPage + ' / ' + totalPages;
+            pageNumberDisplay.textContent = currentPage;
         } else {
             pageNumberDisplay.textContent = '0';
         }
@@ -291,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const noResultsRow = document.createElement('tr');
             noResultsRow.className = 'no-results-row';
-            noResultsRow.innerHTML = '<td colspan="8"><div class="alert alert-info no-results"><i class="bi bi-search"></i> No circulation records found matching your filters.</div></td>';
+            noResultsRow.innerHTML = '<td colspan="8"><div class="alert alert-info no-results"><i class="bi bi-search"></i> No archived circulation records found matching your filters.</div></td>';
             circulationTable.appendChild(noResultsRow);
         } else {
             const noResultsRow = circulationTable.querySelector('.no-results-row');
@@ -339,6 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (nextPageBtn) {
         nextPageBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            const filteredRows = getFilteredRows();
             const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
             if (currentPage < totalPages) {
                 currentPage++;
@@ -348,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initial pagination setup
+    // Initial pagination
     updatePagination();
 });
 </script>

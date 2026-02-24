@@ -328,6 +328,7 @@ class Library_model extends CI_Model {
                         ->from('circulation c')
                         ->join('books b', 'b.id = c.book_id', 'left')
                         ->join('members m', 'm.id = c.member_id', 'left')
+                        ->where('c.archived', 0)
                         ->order_by('c.id', 'DESC')
                         ->get()
                         ->result_array();
@@ -392,6 +393,299 @@ class Library_model extends CI_Model {
         return $this->db->where('id', $id)
                         ->where('role !=', 'admin')
                         ->update('users', ['is_active' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+
+    // ========================================
+    // MEMBER/USER QUERIES
+    // ========================================
+
+    /**
+     * Get member by email
+     */
+    public function get_member_by_email($email) {
+        return $this->db->where('email', $email)->get('members')->row_array();
+    }
+
+    /**
+     * Get user by username
+     */
+    public function get_user_by_username($username) {
+        return $this->db->where('username', $username)->get('users')->row_array();
+    }
+
+    /**
+     * Check if username exists
+     */
+    public function username_exists($username) {
+        $this->db->where('username', $username);
+        return $this->db->count_all_results('users') > 0;
+    }
+
+    /**
+     * Check if email exists
+     */
+    public function email_exists($email) {
+        $this->db->where('email', $email);
+        return $this->db->count_all_results('users') > 0;
+    }
+
+    /**
+     * Get user's borrowed books count
+     */
+    public function get_user_borrowed_count($member_id) {
+        $this->db->where('member_id', $member_id);
+        $this->db->where('status !=', 'returned');
+        return $this->db->count_all_results('circulation');
+    }
+
+    /**
+     * Get user's overdue books count
+     */
+    public function get_user_overdue_count($member_id) {
+        $this->db->where('member_id', $member_id);
+        $this->db->where('due_date <', date('Y-m-d'));
+        $this->db->where('status', 'borrowed');
+        return $this->db->count_all_results('circulation');
+    }
+
+    /**
+     * Get total available books quantity
+     */
+    public function get_total_available_books() {
+        $query = $this->db->select_sum('available_quantity')
+                          ->where('archived', 0)
+                          ->get('books');
+        $result = $query->row_array();
+        return $result['available_quantity'] ? (int)$result['available_quantity'] : 0;
+    }
+
+    /**
+     * Get total books quantity
+     */
+    public function get_total_books_quantity() {
+        $query = $this->db->select_sum('total_quantity')
+                          ->where('archived', 0)
+                          ->get('books');
+        $result = $query->row_array();
+        return $result['total_quantity'] ? (int)$result['total_quantity'] : 0;
+    }
+
+    /**
+     * Get user's borrowed books (not returned)
+     */
+    public function get_user_borrowed_books($member_id) {
+        return $this->db
+            ->select('c.*, b.title as book_title, b.author, b.id as book_id, b.isbn')
+            ->from('circulation c')
+            ->join('books b', 'c.book_id = b.id')
+            ->where('c.member_id', $member_id)
+            ->where('c.status !=', 'returned')
+            ->order_by('c.borrow_date', 'DESC')
+            ->get()
+            ->result_array();
+    }
+
+    /**
+     * Get user's borrowing history with pagination
+     */
+    public function get_user_history($member_id, $limit = 10, $offset = 0) {
+        return $this->db
+            ->select('c.*, b.title as book_title, b.author, b.id as book_id')
+            ->from('circulation c')
+            ->join('books b', 'c.book_id = b.id')
+            ->where('c.member_id', $member_id)
+            ->order_by('c.borrow_date', 'DESC')
+            ->limit($limit, $offset)
+            ->get()
+            ->result_array();
+    }
+
+    /**
+     * Count user's total borrowing history
+     */
+    public function count_user_history($member_id) {
+        return $this->db
+            ->from('circulation c')
+            ->where('c.member_id', $member_id)
+            ->count_all_results();
+    }
+
+    /**
+     * Count user's returned books
+     */
+    public function count_user_returned($member_id) {
+        return $this->db
+            ->from('circulation c')
+            ->where('c.member_id', $member_id)
+            ->where('c.status', 'returned')
+            ->count_all_results();
+    }
+
+    /**
+     * Count user's currently borrowed books
+     */
+    public function count_user_borrowed($member_id) {
+        return $this->db
+            ->from('circulation c')
+            ->where('c.member_id', $member_id)
+            ->where('c.status', 'borrowed')
+            ->count_all_results();
+    }
+
+    /**
+     * Check if user has already borrowed a book
+     */
+    public function has_borrowed_book($member_id, $book_id) {
+        $this->db->where('member_id', $member_id);
+        $this->db->where('book_id', $book_id);
+        $this->db->where('status !=', 'returned');
+        return $this->db->get('circulation')->row_array();
+    }
+
+    /**
+     * Clear fine for a circulation record
+     */
+    public function clear_fine($circulation_id) {
+        $data = array('fine_amount' => 0.00, 'updated_at' => date('Y-m-d H:i:s'));
+        return $this->db->where('id', $circulation_id)->update('circulation', $data);
+    }
+
+    /**
+     * Restore archived book
+     */
+    public function restore_book($id) {
+        return $this->db->where('id', $id)
+                        ->update('books', ['archived' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
+     * Get inactive members
+     */
+    public function get_inactive_members() {
+        return $this->db->where('is_active', 0)
+                        ->order_by('updated_at', 'DESC')
+                        ->get('members')
+                        ->result_array();
+    }
+
+    /**
+     * Activate member
+     */
+    public function activate_member($id) {
+        return $this->db->where('id', $id)
+                        ->update('members', ['is_active' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
+     * Get book by ISBN
+     */
+    public function get_book_by_isbn($isbn) {
+        return $this->db->where('isbn', $isbn)->get('books')->row_array();
+    }
+
+    /**
+     * Get member by email excluding specific member ID
+     */
+    public function get_member_by_email_excluding($email, $member_id) {
+        $this->db->where('email', $email);
+        $this->db->where('id !=', $member_id);
+        return $this->db->get('members')->row_array();
+    }
+
+    /**
+     * Count active borrows for a member
+     */
+    public function count_active_borrows($member_id) {
+        $this->db->where('member_id', $member_id);
+        $this->db->where('status !=', 'returned');
+        return $this->db->count_all_results('circulation');
+    }
+
+    /**
+     * Archive circulation record
+     */
+    public function archive_circulation($id) {
+        return $this->db->where('id', $id)
+                        ->update('circulation', ['archived' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
+     * Get archived circulation records
+     */
+    public function get_archived_circulations() {
+        return $this->db->select('c.*, b.title as book_title, CONCAT(m.first_name, " ", m.last_name) as member_name')
+                        ->from('circulation c')
+                        ->join('books b', 'b.id = c.book_id', 'left')
+                        ->join('members m', 'm.id = c.member_id', 'left')
+                        ->where('c.archived', 1)
+                        ->order_by('c.updated_at', 'DESC')
+                        ->get()
+                        ->result_array();
+    }
+
+    /**
+     * Restore archived circulation record
+     */
+    public function restore_circulation($id) {
+        return $this->db->where('id', $id)
+                        ->update('circulation', ['archived' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
+     * Get user by email
+     */
+    public function get_user_by_email($email) {
+        return $this->db->where('email', $email)->get('users')->row_array();
+    }
+
+    // ========================================
+    // PASSWORD RESET
+    // ========================================
+
+    /**
+     * Generate password reset token
+     */
+    public function generate_reset_token($email) {
+        $token = bin2hex(random_bytes(50));
+        $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        
+        $this->db->where('email', $email)->update('users', [
+            'password_reset_token' => $token,
+            'password_reset_expires' => $expires
+        ]);
+        
+        return $token;
+    }
+
+    /**
+     * Verify reset token
+     */
+    public function verify_reset_token($token) {
+        $user = $this->db->where('password_reset_token', $token)
+                         ->where('password_reset_expires >', date('Y-m-d H:i:s'))
+                         ->get('users')
+                         ->row_array();
+        return $user;
+    }
+
+    /**
+     * Reset user password
+     */
+    public function reset_password($token, $new_password) {
+        $user = $this->verify_reset_token($token);
+        
+        if (!$user) {
+            return false;
+        }
+        
+        $this->db->where('id', $user['id'])->update('users', [
+            'password' => password_hash($new_password, PASSWORD_BCRYPT),
+            'password_reset_token' => NULL,
+            'password_reset_expires' => NULL,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+        
+        return $this->db->affected_rows() > 0;
     }
 }
 ?>
