@@ -155,7 +155,7 @@ function submitCalc(){
     const validation = validateExpression(expr);
     
     if (!validation.valid) {
-        valueDisplay.textContent = validation.msg;
+        valueDisplay.textContent = 'Error';
         valueDisplay.style.color = '#ff6b6b';
         setTimeout(() => {
             valueDisplay.textContent = '';
