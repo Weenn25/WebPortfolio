@@ -11,20 +11,231 @@ class Library extends CI_Controller {
     }
 
     /**
+     * Get the current tab ID from request
+     */
+    private function getTabId() {
+        // Check query parameter first
+        $tab_id = $this->input->get('tab_id');
+        if ($tab_id) {
+            return $tab_id;
+        }
+        
+        // Check POST parameter
+        $tab_id = $this->input->post('tab_id');
+        if ($tab_id) {
+            return $tab_id;
+        }
+        
+        // Check header (for AJAX requests)
+        $headers = $this->input->request_headers();
+        if (isset($headers['X-Tab-Id'])) {
+            return $headers['X-Tab-Id'];
+        }
+        
+        return null;
+    }
+
+    /**
+     * Set session data for specific tab
+     */
+    private function setTabSession($tab_id, $key, $value) {
+        $tab_sessions = $this->session->userdata('tab_sessions') ?: [];
+        if (!isset($tab_sessions[$tab_id])) {
+            $tab_sessions[$tab_id] = [];
+        }
+        $tab_sessions[$tab_id][$key] = $value;
+        $this->session->set_userdata('tab_sessions', $tab_sessions);
+    }
+
+    /**
+     * Get session data for specific tab
+     */
+    private function getTabSession($tab_id, $key) {
+        $tab_sessions = $this->session->userdata('tab_sessions') ?: [];
+        if (isset($tab_sessions[$tab_id][$key])) {
+            return $tab_sessions[$tab_id][$key];
+        }
+        return null;
+    }
+
+    /**
+     * Get all session data for specific tab
+     */
+    private function getTabSessionData($tab_id) {
+        $tab_sessions = $this->session->userdata('tab_sessions') ?: [];
+        return isset($tab_sessions[$tab_id]) ? $tab_sessions[$tab_id] : [];
+    }
+
+    /**
+     * Clear session data for specific tab
+     */
+    private function clearTabSession($tab_id) {
+        $tab_sessions = $this->session->userdata('tab_sessions') ?: [];
+        if (isset($tab_sessions[$tab_id])) {
+            unset($tab_sessions[$tab_id]);
+            $this->session->set_userdata('tab_sessions', $tab_sessions);
+        }
+    }
+
+    /**
+     * Override _remap to sync active session before every request
+     * This ensures each browser tab maintains its own session context
+     */
+    public function _remap($method = '', $params = array()) {
+        // Get tab ID from request
+        $tab_id = $this->getTabId();
+        
+        if ($tab_id) {
+            // Sync library_* variables with this tab's session data
+            $tab_data = $this->getTabSessionData($tab_id);
+            if (!empty($tab_data)) {
+                $this->session->set_userdata([
+                    'library_user_id' => $tab_data['user_id'] ?? null,
+                    'library_username' => $tab_data['username'] ?? null,
+                    'library_role' => $tab_data['role'] ?? null
+                ]);
+            } else {
+                // No session for this tab, clear library variables
+                $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role']);
+            }
+        }
+        
+        if (method_exists($this, $method)) {
+            return call_user_func_array(array($this, $method), $params);
+        } else {
+            show_404();
+        }
+    }
+
+    /**
+     * Determine the active role for this request from multiple sources
+     * Priority: Query param > Session determination > Fallback to default
+     */
+    private function getActiveRole() {
+        // Priority 1: Check if role is explicitly passed as query/post parameter
+        if ($this->input->get('active_role')) {
+            return $this->input->get('active_role');
+        }
+        if ($this->input->post('active_role')) {
+            return $this->input->post('active_role');
+        }
+        
+        // Priority 2: Check request header for role (sent by client JavaScript)
+        $header_role = $this->input->request_headers('X-Active-Role');
+        if ($header_role) {
+            return $header_role;
+        }
+        
+        // Priority 3: Check the current URI path to determine context
+        $current_uri = $this->uri->segment(2); // Get the controller method
+        if ($current_uri === 'user-dashboard' || 
+            $current_uri === 'browse' || 
+            $current_uri === 'my-books' || 
+            $current_uri === 'history' ||
+            $current_uri === 'borrow-book' ||
+            $current_uri === 'profile') {
+            return 'member';
+        }
+        if ($current_uri === 'admin-dashboard' || 
+            $current_uri === 'books' || 
+            $current_uri === 'members' || 
+            $current_uri === 'circulation' || 
+            $current_uri === 'pending-users' || 
+            $current_uri === 'approved-users' ||
+            $current_uri === 'approve-user' ||
+            $current_uri === 'reject-user' ||
+            $current_uri === 'deactivate-user') {
+            return 'admin';
+        }
+        
+        // Priority 4: Check the Referer header for context clues
+        $referer = $this->input->server('HTTP_REFERER') ?: '';
+        if (strpos($referer, 'admin-dashboard') !== false || 
+            strpos($referer, 'approved-users') !== false || 
+            strpos($referer, 'pending-users') !== false || 
+            strpos($referer, 'deactivate-user') !== false ||
+            strpos($referer, 'approve-user') !== false || 
+            strpos($referer, 'reject-user') !== false ||
+            strpos($referer, 'books') !== false ||
+            strpos($referer, 'members') !== false ||
+            strpos($referer, 'circulation') !== false ||
+            strpos($referer, 'active_role=admin') !== false) {
+            return 'admin';
+        }
+        if (strpos($referer, 'user-dashboard') !== false ||
+            strpos($referer, 'browse') !== false ||
+            strpos($referer, 'my-books') !== false ||
+            strpos($referer, 'history') !== false ||
+            strpos($referer, 'active_role=member') !== false) {
+            return 'member';
+        }
+        
+        // Priority 5: If only one role is logged in, use that
+        $admin_id = $this->session->userdata('admin_user_id');
+        $member_id = $this->session->userdata('member_user_id');
+        
+        if ($admin_id && !$member_id) {
+            return 'admin';
+        }
+        if ($member_id && !$admin_id) {
+            return 'member';
+        }
+        
+        // Default to member if both present (safer for user)
+        if ($member_id && $admin_id) {
+            return 'member';
+        }
+        
+        return null;
+    }
+
+    /**
+     * Helper method to maintain library_* variables based on determined active role
+     * This ensures each tab/session maintains its own active user context
+     */
+    private function syncActiveSessionByRole($active_role) {
+        if ($active_role === 'admin') {
+            $admin_id = $this->session->userdata('admin_user_id');
+            if ($admin_id) {
+                $this->session->set_userdata([
+                    'library_user_id' => $admin_id,
+                    'library_username' => $this->session->userdata('admin_username'),
+                    'library_role' => $this->session->userdata('admin_role')
+                ]);
+                return;
+            }
+        } else if ($active_role === 'member') {
+            $member_id = $this->session->userdata('member_user_id');
+            if ($member_id) {
+                $this->session->set_userdata([
+                    'library_user_id' => $member_id,
+                    'library_username' => $this->session->userdata('member_username'),
+                    'library_role' => $this->session->userdata('member_role')
+                ]);
+                return;
+            }
+        }
+        
+        // Fallback: no active role set, clear library variables
+        $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role']);
+    }
+
+    /**
      * Dashboard - restricted to logged in users
      */
     public function dashboard() {
-        if (!$this->session->userdata('library_user_id')) {
-            redirect('library/login');
-        }
-
-        $role = $this->session->userdata('library_role');
+        $admin_id = $this->session->userdata('admin_user_id');
+        $member_id = $this->session->userdata('member_user_id');
+        $admin_role = $this->session->userdata('admin_role');
+        $member_role = $this->session->userdata('member_role');
         
-        // Redirect based on role
-        if ($role === 'admin' || $role === 'librarian') {
+        // Check which role is logged in
+        if ($admin_id && $admin_role && ($admin_role === 'admin' || $admin_role === 'librarian')) {
             redirect('library/admin-dashboard');
-        } else {
+        } else if ($member_id && $member_role === 'member') {
             redirect('library/user-dashboard');
+        } else {
+            redirect('library/login');
         }
     }
 
@@ -32,17 +243,19 @@ class Library extends CI_Controller {
      * Admin Dashboard
      */
     public function admin_dashboard() {
-        if (!$this->session->userdata('library_user_id')) {
+        $admin_id = $this->session->userdata('admin_user_id');
+        $admin_role = $this->session->userdata('admin_role');
+        
+        if (!$admin_id || !($admin_role === 'admin' || $admin_role === 'librarian')) {
             redirect('library/login');
         }
 
-        $role = $this->session->userdata('library_role');
-        if ($role !== 'admin' && $role !== 'librarian') {
-            redirect('library/user-dashboard');
-        }
+        // If member is also logged in, allow access to admin dashboard
+        $member_id = $this->session->userdata('member_user_id');
 
         $data['page_title'] = 'Dashboard';
         $data['stats'] = $this->Library_model->get_dashboard_stats();
+        $data['pending_count'] = $this->Library_model->count_pending_users();
         
         $this->load->view('library/templates/header', $data);
         $this->load->view('library/dashboard', $data);
@@ -53,16 +266,17 @@ class Library extends CI_Controller {
      * User Dashboard
      */
     public function user_dashboard() {
-        if (!$this->session->userdata('library_user_id')) {
+        $member_id = $this->session->userdata('member_user_id');
+        $member_role = $this->session->userdata('member_role');
+        
+        if (!$member_id || $member_role !== 'member') {
             redirect('library/login');
         }
 
-        $role = $this->session->userdata('library_role');
-        if ($role === 'admin' || $role === 'librarian') {
-            redirect('library/admin-dashboard');
-        }
+        // If admin is also logged in, allow access to user dashboard
+        $admin_id = $this->session->userdata('admin_user_id');
 
-        $user_id = $this->session->userdata('library_user_id');
+        $user_id = $member_id;
         $data['page_title'] = 'My Dashboard';
         $data['user'] = $this->Library_model->get_user($user_id);
         
@@ -451,16 +665,12 @@ class Library extends CI_Controller {
      * Login page
      */
     public function login() {
-        // If already logged in, redirect to dashboard
-        if ($this->session->userdata('library_user_id')) {
-            redirect('library/dashboard');
-        }
-
         $data = [];
         
         if ($this->input->post()) {
             $username = trim($this->input->post('username'));
             $password = trim($this->input->post('password'));
+            $tab_id = $this->input->post('tab_id'); // Get tab ID from form
             
             // Check if user exists
             $this->db->select('*');
@@ -475,17 +685,40 @@ class Library extends CI_Controller {
             } else {
                 // Check if active
                 if ($user['is_active'] != 1) {
-                    $this->session->set_flashdata('login_error', 'Your account has been deactivated');
+                    $this->session->set_flashdata('login_error', 'Your account is pending admin approval. Please wait for the administrator to approve your registration.');
                     redirect('library/login');
                 } else {
                     // Verify password
                     if (password_verify($password, $user['password'])) {
-                        $this->session->set_userdata([
-                            'library_user_id' => $user['id'],
-                            'library_username' => $user['username'],
-                            'library_role' => $user['role']
-                        ]);
-                        redirect('library/dashboard');
+                        $role = $user['role'];
+                        
+                        // Store session data for this specific tab
+                        if ($tab_id) {
+                            $this->setTabSession($tab_id, 'user_id', $user['id']);
+                            $this->setTabSession($tab_id, 'username', $user['username']);
+                            $this->setTabSession($tab_id, 'role', $user['role']);
+                            
+                            // Set role-specific global session variables for backward compatibility
+                            if ($role === 'admin' || $role === 'librarian') {
+                                $this->session->set_userdata([
+                                    'admin_user_id' => $user['id'],
+                                    'admin_username' => $user['username'],
+                                    'admin_role' => $user['role']
+                                ]);
+                                redirect('library/dashboard?tab_id=' . urlencode($tab_id) . '&active_role=admin');
+                            } else {
+                                $this->session->set_userdata([
+                                    'member_user_id' => $user['id'],
+                                    'member_username' => $user['username'],
+                                    'member_role' => $user['role']
+                                ]);
+                                redirect('library/dashboard?tab_id=' . urlencode($tab_id) . '&active_role=member');
+                            }
+                        } else {
+                            // Fallback if no tab_id (shouldn't happen with JavaScript)
+                            $this->session->set_flashdata('login_error', 'Session error. Please try again.');
+                            redirect('library/login');
+                        }
                     } else {
                         $this->session->set_flashdata('login_error', 'Invalid username or password');
                         redirect('library/login');
@@ -563,12 +796,12 @@ class Library extends CI_Controller {
             'email' => $email,
             'password' => password_hash($this->input->post('password'), PASSWORD_BCRYPT),
             'role' => 'member',
-            'is_active' => 1,
-            'created_at' => date('Y-m-d H:i:s')
+            'is_active' => 0,
+            'created_at' => gmdate('Y-m-d H:i:s')
         ];
         
         if ($this->Library_model->register_user($register_data)) {
-            echo json_encode(['success' => true, 'message' => 'Registration successful! Redirecting to login...']);
+            echo json_encode(['success' => true, 'message' => 'Registration successful! Your account is pending admin approval. You will be able to log in once approved.']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Registration failed. Please try again.']);
         }
@@ -587,7 +820,46 @@ class Library extends CI_Controller {
      * Logout
      */
     public function logout() {
-        $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role']);
+        $tab_id = $this->getTabId();
+        
+        if ($tab_id) {
+            // Get the role from this tab before clearing
+            $tab_data = $this->getTabSessionData($tab_id);
+            $role = $tab_data['role'] ?? null;
+            
+            // Clear session data for this specific tab
+            $this->clearTabSession($tab_id);
+            
+            // Check if any other tabs still have sessions for this role
+            $tab_sessions = $this->session->userdata('tab_sessions') ?: [];
+            $has_other_admin = false;
+            $has_other_member = false;
+            
+            foreach ($tab_sessions as $other_tab_id => $other_data) {
+                if ($other_tab_id !== $tab_id && !empty($other_data['role'])) {
+                    if ($other_data['role'] === 'admin' || $other_data['role'] === 'librarian') {
+                        $has_other_admin = true;
+                    } else {
+                        $has_other_member = true;
+                    }
+                }
+            }
+            
+            // Clear global role session variables if no other tabs have that role
+            if ($role === 'admin' || $role === 'librarian') {
+                if (!$has_other_admin) {
+                    $this->session->unset_userdata(['admin_user_id', 'admin_username', 'admin_role']);
+                }
+            } else {
+                if (!$has_other_member) {
+                    $this->session->unset_userdata(['member_user_id', 'member_username', 'member_role']);
+                }
+            }
+            
+            // Clear library_* variables
+            $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role']);
+        }
+        
         redirect('library/login');
     }
 
@@ -1388,6 +1660,148 @@ class Library extends CI_Controller {
         $this->load->view('library/templates/header', $data);
         $this->load->view('library/circulation/index', $data);
         $this->load->view('library/templates/footer');
+    }
+
+    // ========================================
+    // USER APPROVAL MANAGEMENT
+    // ========================================
+
+    /**
+     * Pending Users - Admin approval page
+     */
+    public function pending_users() {
+        if (!$this->session->userdata('library_user_id')) {
+            redirect('library/login');
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            redirect('library/user-dashboard');
+        }
+
+        $data['page_title'] = 'Pending User Approvals';
+        $data['pending_users'] = $this->Library_model->get_pending_users();
+        
+        $this->load->view('library/templates/header', $data);
+        $this->load->view('library/users/pending', $data);
+        $this->load->view('library/templates/footer');
+    }
+
+    /**
+     * Approved Users - List of approved users
+     */
+    public function approved_users() {
+        if (!$this->session->userdata('library_user_id')) {
+            redirect('library/login');
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            redirect('library/user-dashboard');
+        }
+
+        $data['page_title'] = 'Approved Users';
+        $data['approved_users'] = $this->Library_model->get_approved_users();
+        
+        $this->load->view('library/templates/header', $data);
+        $this->load->view('library/users/approved', $data);
+        $this->load->view('library/templates/footer');
+    }
+
+    /**
+     * Approve a pending user
+     */
+    public function approve_user($id) {
+        if (!$this->session->userdata('library_user_id')) {
+            redirect('library/login');
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            redirect('library/user-dashboard');
+        }
+
+        $user = $this->Library_model->get_user($id);
+        if (!$user) {
+            $this->session->set_flashdata('error', 'User not found');
+            redirect('library/pending-users');
+        }
+
+        if ($this->Library_model->approve_user($id)) {
+            $this->session->set_flashdata('success', 'User "' . $user['username'] . '" has been approved successfully!');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to approve user');
+        }
+        
+        redirect('library/pending-users');
+    }
+
+    /**
+     * Reject a pending user
+     */
+    public function reject_user($id) {
+        if (!$this->session->userdata('library_user_id')) {
+            redirect('library/login');
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            redirect('library/user-dashboard');
+        }
+
+        $user = $this->Library_model->get_user($id);
+        if (!$user) {
+            $this->session->set_flashdata('error', 'User not found');
+            redirect('library/pending-users');
+        }
+
+        // Prevent rejecting admin accounts
+        if ($user['role'] === 'admin') {
+            $this->session->set_flashdata('error', 'Cannot reject an admin account');
+            redirect('library/pending-users');
+        }
+
+        if ($this->Library_model->reject_user($id)) {
+            $this->session->set_flashdata('success', 'User "' . $user['username'] . '" has been rejected and removed.');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to reject user');
+        }
+        
+        redirect('library/pending-users');
+    }
+
+    /**
+     * Deactivate an approved user
+     */
+    public function deactivate_user($id) {
+        if (!$this->session->userdata('library_user_id')) {
+            redirect('library/login');
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            redirect('library/user-dashboard');
+        }
+
+        $user = $this->Library_model->get_user($id);
+        if (!$user) {
+            $this->session->set_flashdata('error', 'User not found');
+            redirect('library/approved-users');
+        }
+
+        // Prevent deactivating admin accounts
+        if ($user['role'] === 'admin') {
+            $this->session->set_flashdata('error', 'Cannot deactivate an admin account');
+            redirect('library/approved-users');
+        }
+
+        if ($this->Library_model->deactivate_user($id)) {
+            $this->session->set_flashdata('success', 'User "' . $user['username'] . '" has been deactivated.');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to deactivate user');
+        }
+        
+        redirect('library/approved-users');
     }
 
 }

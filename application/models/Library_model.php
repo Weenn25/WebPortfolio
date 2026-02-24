@@ -27,6 +27,10 @@ class Library_model extends CI_Model {
      * Register new user
      */
     public function register_user($data) {
+        // Ensure created_at is always in UTC
+        if (!isset($data['created_at'])) {
+            $data['created_at'] = gmdate('Y-m-d H:i:s');
+        }
         return $this->db->insert('users', $data);
     }
 
@@ -327,6 +331,67 @@ class Library_model extends CI_Model {
                         ->order_by('c.id', 'DESC')
                         ->get()
                         ->result_array();
+    }
+
+    // ========================================
+    // USER APPROVAL MANAGEMENT
+    // ========================================
+
+    /**
+     * Get pending (inactive) users awaiting approval
+     */
+    public function get_pending_users() {
+        return $this->db->where('is_active', 0)
+                        ->where('role', 'member')
+                        ->order_by('created_at', 'DESC')
+                        ->get('users')
+                        ->result_array();
+    }
+
+    /**
+     * Count pending users
+     */
+    public function count_pending_users() {
+        return $this->db->where('is_active', 0)
+                        ->where('role', 'member')
+                        ->count_all_results('users');
+    }
+
+    /**
+     * Get approved (active) users
+     */
+    public function get_approved_users() {
+        return $this->db->where('is_active', 1)
+                        ->where('role', 'member')
+                        ->order_by('created_at', 'DESC')
+                        ->get('users')
+                        ->result_array();
+    }
+
+    /**
+     * Approve a user (set is_active = 1)
+     */
+    public function approve_user($id) {
+        return $this->db->where('id', $id)
+                        ->update('users', ['is_active' => 1, 'updated_at' => date('Y-m-d H:i:s')]);
+    }
+
+    /**
+     * Reject/delete a pending user
+     */
+    public function reject_user($id) {
+        return $this->db->where('id', $id)
+                        ->where('is_active', 0)
+                        ->delete('users');
+    }
+
+    /**
+     * Deactivate an approved user
+     */
+    public function deactivate_user($id) {
+        return $this->db->where('id', $id)
+                        ->where('role !=', 'admin')
+                        ->update('users', ['is_active' => 0, 'updated_at' => date('Y-m-d H:i:s')]);
     }
 }
 ?>

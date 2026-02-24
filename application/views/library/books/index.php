@@ -23,7 +23,6 @@
                         <th>ID</th>
                         <th>Title</th>
                         <th>Author</th>
-                        <th>ISBN</th>
                         <th>Quantity</th>
                         <th>Available</th>
                         <th>Status</th>
@@ -36,7 +35,6 @@
                         <td><?= $book['id'] ?></td>
                         <td><strong><?= $book['title'] ?></strong></td>
                         <td><?= $book['author'] ?></td>
-                        <td><?= $book['isbn'] ?? 'N/A' ?></td>
                         <td><?= $book['total_quantity'] ?? 0 ?></td>
                         <td><?= $book['available_quantity'] ?? 0 ?></td>
                         <td>
@@ -110,12 +108,6 @@
         margin: 0 2px;
     }
 </style>
-        <ul>
-            <li>Add new books with ISBN, title, author, and quantity</li>
-            <li>Edit book information</li>
-            <li>Track available copies</li>
-            <li>Archive or delete books</li>
-            <li>Search and filter books</li>
-        </ul>
+        
     </div>
 </div>

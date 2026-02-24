@@ -198,7 +198,7 @@ h3 {
 
 h4 {
     font-size: 1.5rem;
-    color: var(--dark-color);
+    color: rgb(255, 255, 255);
 }
 
 h5 {
@@ -2014,6 +2014,41 @@ body.auth-page {
     animation: fadeInUp 0.5s ease;
 }
 
+/* Stat Cards Container */
+.stat-cards-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.stat-card-wrapper {
+    flex: 1 1 calc(20% - 1.2rem);
+    min-width: 200px;
+}
+
+@media (max-width: 1399px) {
+    .stat-card-wrapper {
+        flex: 1 1 calc(25% - 1.125rem);
+    }
+}
+
+@media (max-width: 767px) {
+    .stat-card-wrapper {
+        flex: 1 1 calc(50% - 0.75rem);
+    }
+}
+
+@media (max-width: 575px) {
+    .stat-card-wrapper {
+        flex: 1 1 100%;
+    }
+
+    .stat-cards-row {
+        gap: 1rem;
+    }
+}
+
 /* Stat Cards */
 .stat-card {
     background: white;
@@ -2117,22 +2152,20 @@ body.auth-page {
 
 /* Overdue Card */
 .stat-card--overdue {
-    background: linear-gradient(135deg, rgba(231, 76, 60, 0.08) 0%, rgba(230, 126, 34, 0.08) 100%);
-    border: 2px solid rgba(231, 76, 60, 0.2);
+    background: white;
+    border: none;
     color: #e74c3c;
 }
 
-.stat-card--overdue .stat-card__icon-large {
-    flex-shrink: 0;
-    width: 80px;
-    height: 80px;
-    border-radius: 15px;
+.stat-card--overdue::before {
+    background: linear-gradient(90deg, #e74c3c, transparent);
+}
+
+.stat-card--overdue .stat-card__icon {
+    width: 60px;
+    height: 60px;
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    color: white;
+    font-size: 1.75rem;
 }
 
 /* Dashboard Cards */

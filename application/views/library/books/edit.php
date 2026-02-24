@@ -15,11 +15,6 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="isbn" class="form-label">ISBN <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="isbn" name="isbn" value="<?= $book['isbn'] ?>" required>
-                        </div>
-
-                        <div class="mb-3">
                             <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="title" name="title" value="<?= $book['title'] ?>" required>
                         </div>

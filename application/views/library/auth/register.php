@@ -227,10 +227,10 @@
                     // Clear form
                     document.getElementById('register-form').reset();
                     
-                    // Redirect to login after 2 seconds
+                    // Redirect to login after 4 seconds
                     setTimeout(() => {
                         window.location.href = '<?= site_url("library/login") ?>';
-                    }, 2000);
+                    }, 4000);
                 } else {
                     messageDiv.classList.remove('alert-success');
                     messageDiv.classList.add('alert-danger');

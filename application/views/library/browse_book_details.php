@@ -27,10 +27,6 @@
                             <td><?= $book['author'] ?></td>
                         </tr>
                         <tr>
-                            <th>ISBN:</th>
-                            <td><?= $book['isbn'] ?? '<em class="text-muted">Not provided</em>' ?></td>
-                        </tr>
-                        <tr>
                             <th>Publisher:</th>
                             <td><?= $book['publisher'] ?? '<em class="text-muted">Not provided</em>' ?></td>
                         </tr>
@@ -77,21 +73,16 @@
 
             <hr>
 
-            <div class="d-flex justify-content-between">
-                <div>
-                    <?php if($book['available_quantity'] > 0): ?>
-                        <a href="<?= site_url('library/borrow/' . $book['id']) ?>" class="btn btn-primary" onclick="return confirm('Are you sure you want to borrow this book?')">
-                            <i class="bi bi-bookmark-plus"></i> Borrow This Book
-                        </a>
-                    <?php else: ?>
-                        <button class="btn btn-secondary" disabled>
-                            <i class="bi bi-bookmark-x"></i> Currently Unavailable
-                        </button>
-                    <?php endif; ?>
-                </div>
-                <a href="<?= site_url('library/browse') ?>" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Back to Browse
-                </a>
+            <div>
+                <?php if($book['available_quantity'] > 0): ?>
+                    <a href="<?= site_url('library/borrow/' . $book['id']) ?>" class="btn btn-primary" onclick="return confirm('Are you sure you want to borrow this book?')">
+                        <i class="bi bi-bookmark-plus"></i> Borrow This Book
+                    </a>
+                <?php else: ?>
+                    <button class="btn btn-secondary" disabled>
+                        <i class="bi bi-bookmark-x"></i> Currently Unavailable
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
     </div>

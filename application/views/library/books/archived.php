@@ -16,7 +16,6 @@
                         <th>ID</th>
                         <th>Title</th>
                         <th>Author</th>
-                        <th>ISBN</th>
                         <th>Total Copies</th>
                         <th>Available</th>
                         <th>Borrowed</th>
@@ -31,7 +30,6 @@
                         <td><?= $book['id'] ?></td>
                         <td><strong><?= $book['title'] ?></strong></td>
                         <td><?= $book['author'] ?></td>
-                        <td><?= $book['isbn'] ?? 'N/A' ?></td>
                         <td><?= $book['total_quantity'] ?? 0 ?></td>
                         <td><?= $book['available_quantity'] ?? 0 ?></td>
                         <td>

@@ -358,10 +358,39 @@
     </script>
 </head>
 <body>
+    <script>
+        // Generate or retrieve unique tab ID for this browser tab
+        function getTabId() {
+            let tabId = sessionStorage.getItem('tabId');
+            if (!tabId) {
+                tabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                sessionStorage.setItem('tabId', tabId);
+            }
+            return tabId;
+        }
+
+        // Set tab ID immediately and send it with every request
+        const tabId = getTabId();
+        
+        // Set active role in sessionStorage from URL if present
+        const roleFromUrl = new URLSearchParams(window.location.search).get('active_role');
+        if (roleFromUrl) {
+            sessionStorage.setItem('activeRole', roleFromUrl);
+        }
+        
+        // Send tab ID with every request via AJAX header override
+        if (typeof XMLHttpRequest !== 'undefined') {
+            const originalOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function() {
+                originalOpen.apply(this, arguments);
+                this.setRequestHeader('X-Tab-Id', tabId);
+            };
+        }
+    </script>
     <!-- Top Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1030 !important;">
         <div class="container-fluid">
-            <a class="navbar-brand" href="<?= site_url('library/dashboard') ?>">
+            <a class="navbar-brand" href="<?= site_url('library/dashboard?active_role=' . urlencode($this->session->userdata('library_role') ?? 'member')) ?>">
                 <i class="bi bi-book"></i> Library System
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarNav" aria-controls="sidebarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -375,12 +404,12 @@
                         </span>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= site_url('library/profile') ?>">
+                        <a class="nav-link" href="<?= site_url('library/profile?active_role=' . urlencode($this->session->userdata('library_role'))) ?>">
                             <i class="bi bi-person-circle"></i> Profile
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= site_url('library/logout') ?>">
+                        <a class="nav-link" href="<?= site_url('library/logout?active_role=' . urlencode($this->session->userdata('library_role'))) ?>">
                             <i class="bi bi-box-arrow-right"></i> Logout
                         </a>
                     </li>
@@ -402,11 +431,12 @@
                 <?php 
                 $role = $this->session->userdata('library_role');
                 $is_admin = ($role === 'admin' || $role === 'librarian');
+                $role_param = '?active_role=' . urlencode($role);
                 ?>
                 
                 <li class="nav-item">
                     <a class="nav-link <?= ($page_title ?? '') === 'Dashboard' || ($page_title ?? '') === 'My Dashboard' ? 'active' : '' ?>" 
-                       href="<?= $is_admin ? site_url('library/admin-dashboard') : site_url('library/user-dashboard') ?>"
+                       href="<?= $is_admin ? site_url('library/admin-dashboard' . $role_param) : site_url('library/user-dashboard' . $role_param) ?>"
                        title="Dashboard">
                         <i class="bi bi-speedometer2"></i>
                         <span>Dashboard</span>
@@ -416,38 +446,51 @@
                 <?php if ($is_admin): ?>
                     <!-- Admin Menu -->
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Books Management' ? 'active' : '' ?>" href="<?= site_url('library/books') ?>" title="Books">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Books Management' ? 'active' : '' ?>" href="<?= site_url('library/books' . $role_param) ?>" title="Books">
                             <i class="bi bi-book"></i>
                             <span>Books</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Members Management' ? 'active' : '' ?>" href="<?= site_url('library/members') ?>" title="Members">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Members Management' ? 'active' : '' ?>" href="<?= site_url('library/members' . $role_param) ?>" title="Members">
                             <i class="bi bi-people"></i>
                             <span>Members</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Circulation Management' ? 'active' : '' ?>" href="<?= site_url('library/circulation') ?>" title="Circulation">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Circulation Management' ? 'active' : '' ?>" href="<?= site_url('library/circulation' . $role_param) ?>" title="Circulation">
                             <i class="bi bi-arrow-left-right"></i>
                             <span>Circulation</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <?php 
+                        $pending_user_count = $this->Library_model->count_pending_users();
+                        ?>
+                        <a class="nav-link <?= ($page_title ?? '') === 'Pending User Approvals' || ($page_title ?? '') === 'Approved Users' ? 'active' : '' ?>" href="<?= site_url('library/pending-users' . $role_param) ?>" title="User Approvals">
+                            <i class="bi bi-person-check"></i>
+                            <span>User Approvals
+                                <?php if ($pending_user_count > 0): ?>
+                                    <span class="badge bg-danger rounded-pill ms-1"><?= $pending_user_count ?></span>
+                                <?php endif; ?>
+                            </span>
+                        </a>
+                    </li>
                 <?php else: ?>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Browse Books' ? 'active' : '' ?>" href="<?= site_url('library/browse') ?>" title="Browse Books">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Browse Books' ? 'active' : '' ?>" href="<?= site_url('library/browse' . $role_param) ?>" title="Browse Books">
                             <i class="bi bi-search"></i>
                             <span>Browse Books</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'My Borrowed Books' ? 'active' : '' ?>" href="<?= site_url('library/my-books') ?>" title="My Books">
+                        <a class="nav-link <?= ($page_title ?? '') === 'My Borrowed Books' ? 'active' : '' ?>" href="<?= site_url('library/my-books' . $role_param) ?>" title="My Books">
                             <i class="bi bi-bookmark"></i>
                             <span>My Books</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Borrowing History' ? 'active' : '' ?>" href="<?= site_url('library/history') ?>" title="History">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Borrowing History' ? 'active' : '' ?>" href="<?= site_url('library/history' . $role_param) ?>" title="History">
                             <i class="bi bi-clock-history"></i>
                             <span>History</span>
                         </a>

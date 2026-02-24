@@ -2,13 +2,38 @@
     <div class="page-header mb-4">
         <div class="d-flex justify-content-between align-items-center">
             <h1><i class="bi bi-arrow-left-right"></i> Circulation Management</h1>
-            <button class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> New Transaction
-            </button>
+           
+            </a>
         </div>
     </div>
 
     <?php if(!empty($circulations)): ?>
+        <!-- Search and Sort Controls -->
+        <div class="search-sort-controls mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label"><i class="bi bi-search"></i> Search</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search by book title or member name..." autocomplete="off">
+                </div>
+                <div class="col-md-4">
+                    <label for="filterStatus" class="form-label"><i class="bi bi-funnel"></i> Filter by Status</label>
+                    <select class="form-select" id="filterStatus">
+                        <option value="">All Status</option>
+                        <option value="borrowed">Borrowed</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="returned">Returned</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" id="clearFilters" title="Clear all filters">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </button>
+                </div>
+            </div>
+            <div class="results-info mt-2">
+                <small class="text-muted">Showing <span id="resultCount"><?= count($circulations) ?></span> of <?= count($circulations) ?> records</small>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover table-striped">
                 <thead style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white;">
@@ -23,9 +48,28 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="circulationTable">
                     <?php foreach($circulations as $circ): ?>
-                    <tr>
+                    <?php 
+                        $status = $circ['status'] ?? 'borrowed';
+                        $status_class = '';
+                        $status_text = '';
+                        if($status == 'returned') {
+                            $status_class = 'bg-success';
+                            $status_text = 'Returned';
+                        } else if($status == 'overdue') {
+                            $status_class = 'bg-danger';
+                            $status_text = 'Overdue';
+                        } else {
+                            $status_class = 'bg-warning';
+                            $status_text = 'Borrowed';
+                        }
+                    ?>
+                    <tr class="circulation-row" 
+                        data-id="<?= $circ['id'] ?>"
+                        data-book-title="<?= htmlspecialchars($circ['book_title']) ?>"
+                        data-member-name="<?= htmlspecialchars($circ['member_name']) ?>"
+                        data-status="<?= $status ?>">
                         <td><?= $circ['id'] ?></td>
                         <td><strong><?= $circ['book_title'] ?></strong></td>
                         <td><?= $circ['member_name'] ?></td>
@@ -39,38 +83,40 @@
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php 
-                                $status = $circ['status'] ?? 'borrowed';
-                                if($status == 'returned') {
-                                    echo '<span class="badge bg-success">Returned</span>';
-                                } else if($status == 'overdue') {
-                                    echo '<span class="badge bg-danger">Overdue</span>';
-                                } else {
-                                    echo '<span class="badge bg-warning">Borrowed</span>';
-                                }
-                            ?>
+                            <span class="badge <?= $status_class ?>"><?= $status_text ?></span>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-info" title="View Details">
+                            <a href="<?= site_url('library/circulation/view/' . $circ['id']) ?>" class="btn btn-sm btn-info" title="View Details">
                                 <i class="bi bi-eye"></i>
-                            </button>
+                            </a>
                             <?php if(empty($circ['return_date'])): ?>
-                            <button class="btn btn-sm btn-success" title="Mark as Returned">
+                            <a href="<?= site_url('library/circulation/mark_returned/' . $circ['id']) ?>" class="btn btn-sm btn-success" title="Mark as Returned" onclick="return confirm('Mark this book as returned?')">
                                 <i class="bi bi-check-circle"></i>
-                            </button>
+                            </a>
                             <?php endif; ?>
-                            <button class="btn btn-sm btn-danger" title="Delete">
+                            <a href="<?= site_url('library/circulation/delete/' . $circ['id']) ?>" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this record?')">
                                 <i class="bi bi-trash"></i>
-                            </button>
+                            </a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-controls mt-4">
+            <nav aria-label="Table pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item"><a class="page-link" href="#" id="prevPage">Previous</a></li>
+                    <li class="page-item active"><a class="page-link" href="#" id="pageNumber">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#" id="nextPage">Next</a></li>
+                </ul>
+            </nav>
+        </div>
     <?php else: ?>
         <div class="alert alert-info" role="alert">
-            <i class="bi bi-info-circle"></i> No circulation records found. <a href="#">Create a new transaction</a> to get started.
+            <i class="bi bi-info-circle"></i> No circulation records found. <a href="<?= site_url('library/circulation/new') ?>">Create a new transaction</a> to get started.
         </div>
     <?php endif; ?>
 </div>
@@ -114,4 +160,197 @@
     .btn-sm {
         margin: 0 2px;
     }
+
+    .search-sort-controls {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .results-info {
+        text-align: right;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 40px;
+    }
+
+    .pagination-controls {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        text-align: center;
+    }
+
+    .pagination {
+        margin-bottom: 0;
+    }
+
+    .pagination .page-link {
+        color: #3498db;
+        border-color: #ddd;
+    }
+
+    .pagination .page-link:hover {
+        color: #2980b9;
+        background-color: #f0f0f0;
+        border-color: #ddd;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const filterStatus = document.getElementById('filterStatus');
+    const clearButton = document.getElementById('clearFilters');
+    const circulationTable = document.getElementById('circulationTable');
+    const circulationRows = document.querySelectorAll('.circulation-row');
+    const resultCount = document.getElementById('resultCount');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    const pageNumberDisplay = document.getElementById('pageNumber');
+
+    let currentPage = 1;
+    let itemsPerPage = 10; // Fixed items per page
+
+    function getFilteredRows() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const statusFilter = filterStatus.value;
+        
+        return Array.from(circulationRows).filter(row => {
+            const bookTitle = row.getAttribute('data-book-title').toLowerCase();
+            const memberName = row.getAttribute('data-member-name').toLowerCase();
+            const status = row.getAttribute('data-status');
+            
+            const matchesSearch = !searchTerm || 
+                                 bookTitle.includes(searchTerm) || 
+                                 memberName.includes(searchTerm);
+            
+            const matchesStatus = !statusFilter || status === statusFilter;
+            
+            return matchesSearch && matchesStatus;
+        });
+    }
+
+    function updatePagination() {
+        filteredRows = getFilteredRows();
+        const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+        
+        // Ensure current page is within bounds
+        if (currentPage > totalPages && totalPages > 0) {
+            currentPage = totalPages;
+        } else if (currentPage < 1) {
+            currentPage = 1;
+        }
+
+        // Hide all rows
+        circulationRows.forEach(row => row.style.display = 'none');
+
+        // Show rows for current page
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        
+        const rowsToDisplay = filteredRows.slice(startIndex, endIndex);
+        rowsToDisplay.forEach(row => row.style.display = '');
+
+        // Update result count and page display
+        resultCount.textContent = filteredRows.length;
+        
+        // Update pagination display
+        if (totalPages > 0) {
+            pageNumberDisplay.textContent = currentPage + ' / ' + totalPages;
+        } else {
+            pageNumberDisplay.textContent = '0';
+        }
+
+        // Update button states
+        prevPageBtn.parentElement.classList.toggle('disabled', currentPage === 1);
+        nextPageBtn.parentElement.classList.toggle('disabled', currentPage === totalPages);
+
+        // Show no results message if needed
+        if (filteredRows.length === 0) {
+            if (circulationTable.querySelector('.no-results-row')) {
+                circulationTable.querySelector('.no-results-row').remove();
+            }
+            const noResultsRow = document.createElement('tr');
+            noResultsRow.className = 'no-results-row';
+            noResultsRow.innerHTML = '<td colspan="8"><div class="alert alert-info no-results"><i class="bi bi-search"></i> No circulation records found matching your filters.</div></td>';
+            circulationTable.appendChild(noResultsRow);
+        } else {
+            const noResultsRow = circulationTable.querySelector('.no-results-row');
+            if (noResultsRow) {
+                noResultsRow.remove();
+            }
+        }
+    }
+
+    function filterRecords() {
+        currentPage = 1; // Reset to first page on filter change
+        updatePagination();
+    }
+
+    // Event listeners
+    if (searchInput) {
+        searchInput.addEventListener('input', filterRecords);
+        searchInput.addEventListener('keyup', filterRecords);
+    }
+    
+    if (filterStatus) {
+        filterStatus.addEventListener('change', filterRecords);
+    }
+    
+    if (clearButton) {
+        clearButton.addEventListener('click', function() {
+            searchInput.value = '';
+            filterStatus.value = '';
+            currentPage = 1;
+            filterRecords();
+        });
+    }
+
+    if (prevPageBtn) {
+        prevPageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage--;
+                updatePagination();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    }
+
+    if (nextPageBtn) {
+        nextPageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePagination();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    }
+
+    // Initial pagination setup
+    updatePagination();
+});
+</script>

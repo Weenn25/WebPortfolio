@@ -36,10 +36,7 @@
                             <td><?= $book['id'] ?></td>
                         </tr>
                         <tr>
-                            <th>ISBN:</th>
-                            <td><?= $book['isbn'] ?? 'N/A' ?></td>
-                        </tr>
-                        <tr>
+
                             <th>Title:</th>
                             <td><strong><?= $book['title'] ?></strong></td>
                         </tr>

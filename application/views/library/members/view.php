@@ -100,9 +100,6 @@
                         </a>
                     <?php endif; ?>
                 </div>
-                <a href="<?= site_url('library/members') ?>" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Back to List
-                </a>
             </div>
         </div>
     </div>

@@ -88,6 +88,38 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Generate unique tab ID for this login session
+        function getTabId() {
+            let tabId = sessionStorage.getItem('tabId');
+            if (!tabId) {
+                tabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                sessionStorage.setItem('tabId', tabId);
+            }
+            return tabId;
+        }
+
+        // Add tab ID to login form before submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.querySelector('form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    // Check if tab_id field already exists
+                    let hasTabId = false;
+                    this.querySelectorAll('input[name="tab_id"]').forEach(() => {
+                        hasTabId = true;
+                    });
+                    
+                    if (!hasTabId) {
+                        const tabIdInput = document.createElement('input');
+                        tabIdInput.type = 'hidden';
+                        tabIdInput.name = 'tab_id';
+                        tabIdInput.value = getTabId();
+                        this.appendChild(tabIdInput);
+                    }
+                });
+            }
+        });
+
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const toggleIcon = document.getElementById('toggleIcon');

@@ -1,7 +1,21 @@
 <div class="dashboard-container">
+    <!-- Pending Approvals Alert -->
+    <?php if (isset($pending_count) && $pending_count > 0): ?>
+    <div class="alert alert-primary alert-dismissible fade show d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-person-exclamation me-3" style="font-size: 1.5rem;"></i>
+        <div class="flex-grow-1">
+            <strong><?= $pending_count ?> pending user registration<?= $pending_count > 1 ? 's' : '' ?></strong> awaiting your approval.
+        </div>
+        <a href="<?= site_url('library/pending-users') ?>" class="btn btn-primary btn-sm ms-3">
+            <i class="bi bi-arrow-right"></i> Review Now
+        </a>
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="alert"></button>
+    </div>
+    <?php endif; ?>
+
     <!-- Statistics Cards -->
-    <div class="row mb-5">
-        <div class="col-lg-3 col-md-6 mb-4">
+    <div class="stat-cards-row mb-5">
+        <div class="stat-card-wrapper">
             <div class="stat-card stat-card--total">
                 <div class="stat-card__icon">
                     <i class="bi bi-book"></i>
@@ -14,7 +28,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card-wrapper">
             <div class="stat-card stat-card--available">
                 <div class="stat-card__icon">
                     <i class="bi bi-check-circle"></i>
@@ -27,7 +41,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card-wrapper">
             <div class="stat-card stat-card--members">
                 <div class="stat-card__icon">
                     <i class="bi bi-people"></i>
@@ -40,7 +54,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card-wrapper">
             <div class="stat-card stat-card--borrowed">
                 <div class="stat-card__icon">
                     <i class="bi bi-hand-index"></i>
@@ -52,13 +66,11 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Overdue Books -->
-    <div class="row mb-5">
-        <div class="col-lg-12">
+        <!-- Overdue Books Alert Card - Same Row -->
+        <div class="stat-card-wrapper">
             <div class="stat-card stat-card--overdue">
-                <div class="stat-card__icon-large">
+                <div class="stat-card__icon">
                     <i class="bi bi-exclamation-triangle"></i>
                 </div>
                 <div class="stat-card__content">
@@ -112,15 +124,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="overview-item">
-                                <i class="bi bi-graph-up"></i>
-                                <div>
-                                    <h6>View Reports</h6>
-                                    <p>Access system statistics</p>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -137,7 +141,7 @@
                 <div class="card-body">
                     <div class="info-item mb-3">
                         <label class="info-label">Current Date</label>
-                        <p class="info-value"><?= date('M d, Y, h:i A') ?></p>
+                        <p class="info-value" id="currentDateTime"><?= date('M d, Y, h:i A') ?></p>
                     </div>
                     <div class="info-item mb-3">
                         <label class="info-label">Your Role</label>
@@ -152,9 +156,41 @@
                         </p>
                     </div>
                     <hr class="my-3">
-                    <p class="text-muted small">Last updated: Just now</p>
+                    <p class="text-muted small">Last updated: <span id="lastUpdated">Just now</span></p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Real-time clock for System Information
+function updateDateTime() {
+    const now = new Date();
+    const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    };
+    const dateTimeString = now.toLocaleDateString('en-US', options);
+    const dateTimeElement = document.getElementById('currentDateTime');
+    if (dateTimeElement) {
+        dateTimeElement.textContent = dateTimeString;
+    }
+    
+    // Update "Last updated" timestamp
+    const lastUpdatedElement = document.getElementById('lastUpdated');
+    if (lastUpdatedElement) {
+        lastUpdatedElement.textContent = 'Just now';
+    }
+}
+
+// Update immediately on load
+updateDateTime();
+
+// Update every second
+setInterval(updateDateTime, 1000);
+</script>

@@ -49,6 +49,11 @@ $route['library/borrow/(:num)'] = 'library/borrow_book/$1';
 $route['library/return/(:num)'] = 'library/return_book/$1';
 $route['library/clear-fine/(:num)'] = 'library/clear_fine/$1';
 $route['library/circulation'] = 'library/circulation';
+$route['library/pending-users'] = 'library/pending_users';
+$route['library/approved-users'] = 'library/approved_users';
+$route['library/approve-user/(:num)'] = 'library/approve_user/$1';
+$route['library/reject-user/(:num)'] = 'library/reject_user/$1';
+$route['library/deactivate-user/(:num)'] = 'library/deactivate_user/$1';
 
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
