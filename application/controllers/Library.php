@@ -680,12 +680,12 @@ class Library extends CI_Controller {
             $user = $query->row_array();
             
             if (!$user) {
-                $this->session->set_flashdata('login_error', "User '$username' not found");
+                $this->session->set_flashdata('login_error', "Wrong username");
                 redirect('library/login');
             } else {
                 // Check if active
                 if ($user['is_active'] != 1) {
-                    $this->session->set_flashdata('login_error', 'Your account is pending admin approval. Please wait for the administrator to approve your registration.');
+                    $this->session->set_flashdata('login_error', 'Your account is pending approval. Please wait for admin to approve your registration.');
                     redirect('library/login');
                 } else {
                     // Verify password
@@ -716,11 +716,11 @@ class Library extends CI_Controller {
                             }
                         } else {
                             // Fallback if no tab_id (shouldn't happen with JavaScript)
-                            $this->session->set_flashdata('login_error', 'Session error. Please try again.');
+                            $this->session->set_flashdata('login_error', 'Something went wrong. Please try again.');
                             redirect('library/login');
                         }
                     } else {
-                        $this->session->set_flashdata('login_error', 'Invalid username or password');
+                        $this->session->set_flashdata('login_error', 'Wrong password');
                         redirect('library/login');
                     }
                 }
@@ -761,7 +761,7 @@ class Library extends CI_Controller {
         if (!$this->form_validation->run()) {
             echo json_encode([
                 'success' => false, 
-                'message' => 'Validation failed',
+                'message' => 'Please check your information and try again',
                 'errors' => $this->form_validation->error_array()
             ]);
             return;
@@ -779,13 +779,13 @@ class Library extends CI_Controller {
         $email_exists = $this->db->count_all_results('users') > 0;
         
         if ($username_exists && $email_exists) {
-            echo json_encode(['success' => false, 'message' => 'Username and email already exist']);
+            echo json_encode(['success' => false, 'message' => 'Username and email already taken']);
             return;
         } else if ($username_exists) {
-            echo json_encode(['success' => false, 'message' => 'Username already exists']);
+            echo json_encode(['success' => false, 'message' => 'Username already taken']);
             return;
         } else if ($email_exists) {
-            echo json_encode(['success' => false, 'message' => 'Email already exists']);
+            echo json_encode(['success' => false, 'message' => 'Email already taken']);
             return;
         }
         
@@ -801,9 +801,9 @@ class Library extends CI_Controller {
         ];
         
         if ($this->Library_model->register_user($register_data)) {
-            echo json_encode(['success' => true, 'message' => 'Registration successful! Your account is pending admin approval. You will be able to log in once approved.']);
+            echo json_encode(['success' => true, 'message' => 'Account created! Waiting for admin approval. You can login once approved.']);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Registration failed. Please try again.']);
+            echo json_encode(['success' => false, 'message' => 'Something went wrong. Please try again.']);
         }
     }
 

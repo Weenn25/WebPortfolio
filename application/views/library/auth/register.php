@@ -239,7 +239,7 @@
                     const icon = messageDiv.querySelector('i');
                     icon.classList.remove('bi-check-circle-fill');
                     icon.classList.add('bi-exclamation-circle-fill');
-                    messageTitle.textContent = 'Registration Error';
+                    messageTitle.textContent = 'Oops!';
                     messageText.textContent = data.message;
                     messageDiv.style.display = 'flex';
                     
@@ -268,8 +268,8 @@
                 console.error('Error:', error);
                 messageDiv.classList.remove('alert-success');
                 messageDiv.classList.add('alert-danger');
-                messageTitle.textContent = 'Error';
-                messageText.textContent = 'An error occurred. Please try again.';
+                messageTitle.textContent = 'Oops!';
+                messageText.textContent = 'Something went wrong. Please try again.';
                 messageDiv.style.display = 'flex';
                 
                 // Re-enable submit button

@@ -33,7 +33,7 @@
                     <div class="alert alert-danger" role="alert">
                         <i class="bi bi-exclamation-circle-fill"></i>
                         <div class="alert-content">
-                            <strong>Login Error</strong>
+                            <strong>Oops!</strong>
                             <p><?= htmlspecialchars($error) ?></p>
                         </div>
                     </div>
