@@ -77,7 +77,7 @@
     <?php else: ?>
         <div class="card">
             <div class="card-body text-center py-5">
-                <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+               
                 <h4 class="mt-3 text-muted">No Pending Registrations</h4>
                 <p class="text-muted">All user registrations have been processed. New registrations will appear here.</p>
             </div>
