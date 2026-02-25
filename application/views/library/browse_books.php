@@ -11,7 +11,7 @@
                     <label for="searchInput" class="form-label"><i class="bi bi-search"></i> Search Books</label>
                     <input type="text" class="form-control" id="searchInput" placeholder="Search by title, author, publisher..." autocomplete="off">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="sortSelect" class="form-label"><i class="bi bi-arrow-down-up"></i> Sort By</label>
                     <select class="form-select" id="sortSelect">
                         <option value="title-asc">Title (A-Z)</option>
@@ -23,10 +23,26 @@
                         <option value="available">Availability (Available First)</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button class="btn btn-outline-secondary w-100" id="clearFilters" title="Clear all filters">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reset
-                    </button>
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <div class="dropdown flex-grow-1">
+                        <button class="btn btn-outline-secondary w-100 dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-eye"></i> View By
+                        </button>
+                        <ul class="dropdown-menu w-100" aria-labelledby="viewDropdown">
+                            <li>
+                                <input type="radio" class="btn-check" name="viewMode" id="cardView" value="card" checked>
+                                <label class="dropdown-item" for="cardView" style="cursor: pointer;">
+                                    <i class="bi bi-grid-3x2-gap"></i> Card View
+                                </label>
+                            </li>
+                            <li>
+                                <input type="radio" class="btn-check" name="viewMode" id="listView" value="list">
+                                <label class="dropdown-item" for="listView" style="cursor: pointer;">
+                                    <i class="bi bi-list-ul"></i> List View
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div class="results-info mt-2">
@@ -34,7 +50,7 @@
             </div>
         </div>
 
-        <div class="row" id="booksContainer">
+        <div class="row" id="booksContainer" data-view-mode="card">
             <?php foreach($books as $book): ?>
             <div class="col-md-6 col-lg-4 mb-4 book-item" data-title="<?= htmlspecialchars($book['title']) ?>" data-author="<?= htmlspecialchars($book['author']) ?>" data-publisher="<?= htmlspecialchars($book['publisher'] ?? '') ?>" data-description="<?= htmlspecialchars($book['description'] ?? '') ?>" data-year="<?= $book['publication_year'] ?? '' ?>" data-available="<?= $book['available_quantity'] ?>">
                 <div class="card book-card h-100">
@@ -59,13 +75,13 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white border-top-0">
-                        <a href="<?= site_url('library/browse/view/' . $book['id']) ?>" class="btn btn-info btn-sm">
+                        <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#bookDetailsModal" onclick="showBookDetails(<?= $book['id'] ?>)">
                             <i class="bi bi-eye"></i> View Details
-                        </a>
+                        </button>
                         <?php if($book['available_quantity'] > 0): ?>
-                            <a href="<?= site_url('library/borrow/' . $book['id']) ?>" class="btn btn-primary btn-sm" onclick="return confirm('Are you sure you want to borrow this book?')">
+                            <button class="btn btn-primary btn-sm" onclick="borrowBook(<?= $book['id'] ?>)">
                                 <i class="bi bi-bookmark-plus"></i> Borrow
-                            </a>
+                            </button>
                         <?php else: ?>
                             <button class="btn btn-secondary btn-sm" disabled>
                                 <i class="bi bi-bookmark-x"></i> Unavailable
@@ -83,89 +99,184 @@
     <?php endif; ?>
 </div>
 
-<style>
-    .browse-books-container {
-        animation: fadeIn 0.5s ease-in;
-    }
-
-    .page-header h1 {
-        color: #2c3e50;
-        font-weight: 700;
-    }
-
-    .header-line {
-        border: 3px solid #3498db;
-        margin-bottom: 30px;
-    }
-
-    .book-card {
-        border: none;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .book-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .book-card .card-title {
-        color: #2c3e50;
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 15px;
-        min-height: 50px;
-    }
-
-    .book-card .card-text {
-        color: #7f8c8d;
-        font-size: 0.9rem;
-        margin-bottom: 10px;
-    }
-
-    .availability-info {
-        margin-top: 15px;
-    }
-
-    .card-footer {
-        padding: 15px;
-    }
-
-    .btn-sm {
-        margin-right: 5px;
-    }
-
-    .search-sort-controls {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
-    }
-
-    .results-info {
-        text-align: right;
-    }
-
-    .no-results {
-        text-align: center;
-        padding: 40px;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>
+<!-- Book Details Modal -->
+<div class="modal fade" id="bookDetailsModal" tabindex="-1" aria-labelledby="bookDetailsModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" tabindex="-1">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookDetailsModalLabel">Book Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBookContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
+function showBookDetails(bookId) {
+    const modalContent = document.getElementById('modalBookContent');
+    const modal = document.getElementById('bookDetailsModal');
+    
+    // Fetch book details via AJAX
+    fetch('<?= site_url("library/get_book_details/") ?>' + bookId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const book = data.book;
+                let html = `
+                    <div class="book-details-content">
+                        <h4>${book.title}</h4>
+                        <hr>
+                        <p><strong>Author:</strong> ${book.author}</p>
+                        ${book.publisher ? `<p><strong>Publisher:</strong> ${book.publisher}</p>` : ''}
+                        ${book.publication_year ? `<p><strong>Publication Year:</strong> ${book.publication_year}</p>` : ''}
+                        <p><strong>Total Quantity:</strong> ${book.total_quantity}</p>
+                        <p><strong>Available Quantity:</strong> <span class="badge ${book.available_quantity > 0 ? 'bg-success' : 'bg-danger'}">${book.available_quantity}</span></p>
+                        ${book.description ? `<hr><p><strong>Description:</strong></p><p>${book.description}</p>` : ''}
+                    </div>
+                `;
+                modalContent.innerHTML = html;
+                // Ensure modal is shown
+                if (modal && window.bootstrap) {
+                    let bsModal = new window.bootstrap.Modal(modal);
+                    bsModal.show();
+                }
+            } else {
+                modalContent.innerHTML = '<div class="alert alert-danger">Error loading book details</div>';
+            }
+        })
+        .catch(error => {
+            modalContent.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+        });
+}
+
+// Add global cleanup for modal backdrops
+if (document.getElementById('bookDetailsModal')) {
+    document.getElementById('bookDetailsModal').addEventListener('hidden.bs.modal', function() {
+        // Remove all modal backdrops
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+            backdrop.remove();
+        });
+        // Reset body
+        document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
+    });
+}
+
+function borrowBook(bookId) {
+    iziToast.show({
+        timeout: 20000,
+        layout: 2,
+        title: '<i class="bi bi-bookmark-plus"></i> Borrow Book',
+        message: 'Are you sure you want to borrow this book?',
+        position: 'center',
+        backgroundColor: '#3498db',
+        titleColor: '#fff',
+        messageColor: '#fff',
+        titleFontSize: '18px',
+        messageFontSize: '15px',
+        padding: '20px',
+        progressBar: true,
+        progressBarColor: '#fff',
+        icon: false,
+        maxWidth: '500px',
+        animateInside: true,
+        transitionIn: 'fadeInDown',
+        transitionOut: 'fadeOutUp',
+        zindex: 9999,
+        overlay: true,
+        buttons: [
+            ['<button class="btn btn-light btn-sm" style="font-weight: 600; padding: 10px 24px; border: none; cursor: pointer; touch-action: auto;"><i class="bi bi-check-circle"></i> YES, BORROW</button>', function(instance, toast) {
+                instance.hide({ transitionOut: 'fadeOut' }, toast);
+                window.location.href = '<?= site_url("library/borrow/") ?>' + bookId;
+            }, true],
+            ['<button class="btn btn-outline-light btn-sm" style="font-weight: 600; padding: 10px 24px; border-width: 2px; cursor: pointer; touch-action: auto;"><i class="bi bi-x-circle"></i> CANCEL</button>', function(instance, toast) {
+                instance.hide({ transitionOut: 'fadeOut' }, toast);
+            }]
+        ]
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
     const sortSelect = document.getElementById('sortSelect');
-    const clearButton = document.getElementById('clearFilters');
     const booksContainer = document.getElementById('booksContainer');
     const bookItems = document.querySelectorAll('.book-item');
     const resultCount = document.getElementById('resultCount');
+    const viewModeButtons = document.querySelectorAll('input[name="viewMode"]');
+
+    function renderBooks(items) {
+        const viewMode = booksContainer.getAttribute('data-view-mode');
+        booksContainer.innerHTML = '';
+        
+        if (items.length === 0) {
+            booksContainer.innerHTML = '<div class="col-12"><div class="alert alert-info no-results"><i class="bi bi-search"></i> No books found matching your search.</div></div>';
+            return;
+        }
+
+        if (viewMode === 'list') {
+            // List view
+            const listHTML = items.map(item => {
+                const bookCard = item.querySelector('.book-card');
+                const title = item.getAttribute('data-title');
+                const author = item.getAttribute('data-author');
+                const publisher = item.getAttribute('data-publisher');
+                const year = item.getAttribute('data-year');
+                const available = item.getAttribute('data-available');
+                const total = bookCard.querySelector('.badge').textContent.match(/\d+\s*\/\s*(\d+)/)?.[1] || '0';
+                const bookId = item.querySelector('.btn-info').onclick.toString().match(/\d+/)[0];
+
+                return `
+                    <div class="col-12 mb-3 book-item-list" data-title="${title}" data-author="${author}" data-publisher="${publisher}" data-year="${year}" data-available="${available}">
+                        <div class="card book-list-card h-100">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="card-title">${title}</h6>
+                                        <p class="card-text mb-2">
+                                            <small><strong>Author:</strong> ${author}</small><br>
+                                            ${publisher ? `<small><strong>Publisher:</strong> ${publisher}</small><br>` : ''}
+                                            ${year ? `<small><strong>Year:</strong> ${year}</small>` : ''}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <p class="card-text mb-0">
+                                            <small><strong>Quantity:</strong></small><br>
+                                            <small>Available: <span class="badge ${available > 0 ? 'bg-success' : 'bg-danger'}">${available} / ${total}</span></small>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3 text-md-end text-start mt-2 mt-md-0">
+                                        <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#bookDetailsModal" onclick="showBookDetails(${bookId})">
+                                            <i class="bi bi-eye"></i> Details
+                                        </button>
+                                        ${available > 0 ? 
+                                            `<button class="btn btn-primary btn-sm" onclick="borrowBook(${bookId})">
+                                                <i class="bi bi-bookmark-plus"></i> Borrow
+                                            </button>` : 
+                                            `<button class="btn btn-secondary btn-sm" disabled>
+                                                <i class="bi bi-bookmark-x"></i> Out
+                                            </button>`
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            booksContainer.innerHTML = listHTML;
+        } else {
+            // Card view
+            items.forEach(item => {
+                booksContainer.appendChild(item.cloneNode(true));
+            });
+        }
+    }
 
     function filterAndSort() {
         const searchTerm = searchInput.value.toLowerCase().trim();
@@ -211,18 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Clear and re-add sorted items
-        booksContainer.innerHTML = '';
-        
-        if (items.length === 0) {
-            booksContainer.innerHTML = '<div class="col-12"><div class="alert alert-info no-results"><i class="bi bi-search"></i> No books found matching your search.</div></div>';
-        } else {
-            items.forEach(item => {
-                booksContainer.appendChild(item.cloneNode(true));
-            });
-        }
-        
-        // Update result count
+        renderBooks(items);
         resultCount.textContent = items.length;
     }
 
@@ -235,13 +335,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sortSelect) {
         sortSelect.addEventListener('change', filterAndSort);
     }
-    
-    if (clearButton) {
-        clearButton.addEventListener('click', function() {
-            searchInput.value = '';
-            sortSelect.value = 'title-asc';
+
+    // View mode toggle
+    viewModeButtons.forEach(button => {
+        button.addEventListener('change', function() {
+            booksContainer.setAttribute('data-view-mode', this.value);
+            booksContainer.classList.toggle('list-view', this.value === 'list');
+            booksContainer.classList.toggle('card-view', this.value === 'card');
             filterAndSort();
         });
-    }
+    });
 });
 </script>

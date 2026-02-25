@@ -48,10 +48,9 @@
                                 <i class="bi bi-eye"></i>
                             </a>
                             <?php if($record['status'] !== 'returned'): ?>
-                                <a href="<?= site_url('library/return/' . $record['id']) ?>" class="btn btn-sm btn-success" 
-                                   onclick="return confirm('Are you sure you want to return this book?')" title="Return Book">
+                                <button class="btn btn-sm btn-success" onclick="returnBook(<?= $record['id'] ?>)" title="Return Book">
                                     <i class="bi bi-arrow-return-left"></i>
-                                </a>
+                                </button>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -117,50 +116,38 @@
     <?php endif; ?>
 </div>
 
-<style>
-    .history-container {
-        animation: fadeIn 0.5s ease-in;
-    }
-
-    .page-header h1 {
-        color: #2c3e50;
-        font-weight: 700;
-    }
-
-    .header-line {
-        border: 3px solid #3498db;
-        margin-bottom: 30px;
-    }
-
-    .table {
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .table thead th {
-        font-weight: 600;
-        padding: 15px;
-        border: none;
-    }
-
-    .table tbody td {
-        padding: 12px 15px;
-        vertical-align: middle;
-    }
-
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .card {
-        border: none;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>
+<script>
+function returnBook(borrowId) {
+    iziToast.show({
+        timeout: 20000,
+        layout: 2,
+        title: '<i class="bi bi-arrow-return-left"></i> Return Book',
+        message: 'Are you sure you want to return this book?',
+        position: 'center',
+        backgroundColor: '#3498db',
+        titleColor: '#fff',
+        messageColor: '#fff',
+        titleFontSize: '18px',
+        messageFontSize: '15px',
+        padding: '20px',
+        progressBar: true,
+        progressBarColor: '#fff',
+        icon: false,
+        maxWidth: '500px',
+        animateInside: true,
+        transitionIn: 'fadeInDown',
+        transitionOut: 'fadeOutUp',
+        zindex: 9999,
+        overlay: true,
+        buttons: [
+            ['<button class="btn btn-light btn-sm" style="font-weight: 600; padding: 10px 24px; border: none; cursor: pointer; touch-action: auto;"><i class="bi bi-check-circle"></i> YES, RETURN</button>', function(instance, toast) {
+                instance.hide({ transitionOut: 'fadeOut' }, toast);
+                window.location.href = '<?= site_url("library/return/") ?>' + borrowId;
+            }, true],
+            ['<button class="btn btn-outline-light btn-sm" style="font-weight: 600; padding: 10px 24px; border-width: 2px; cursor: pointer; touch-action: auto;"><i class="bi bi-x-circle"></i> CANCEL</button>', function(instance, toast) {
+                instance.hide({ transitionOut: 'fadeOut' }, toast);
+            }]
+        ]
+    });
+}
+</script>

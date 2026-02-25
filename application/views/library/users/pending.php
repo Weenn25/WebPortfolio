@@ -84,17 +84,3 @@
         </div>
     <?php endif; ?>
 </div>
-
-<style>
-.avatar-circle {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-</style>

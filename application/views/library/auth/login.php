@@ -7,7 +7,6 @@
     <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/images/favicon.svg') ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/iziToast.min.css">
     <link rel="stylesheet" href="<?= base_url('assets/css/library.css') ?>">
 </head>
 <body class="auth-page">
@@ -30,6 +29,13 @@
                 
             </div>
             <div class="auth-form">
+                <!-- Notification container -->
+                <div id="notificationContainer"></div>
+                
+                <!-- Hidden divs to store error and success messages for JavaScript use -->
+                <div id="errorMessage" style="display:none;"><?= isset($error) && !empty($error) ? htmlspecialchars($error) : '' ?></div>
+                <div id="successMessage" style="display:none;"><?php $success_msg = $this->session->flashdata('success'); echo isset($success_msg) && !empty($success_msg) ? htmlspecialchars($success_msg) : ''; ?></div>
+                
                 <?php $success_msg = $this->session->flashdata('success'); ?>
                 <?php if (!empty($success_msg)): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert" style="text-align: center; border-radius: 8px; border: 2px solid #28a745; margin-bottom: 25px;">
@@ -82,7 +88,6 @@
                 <div class="auth-divider">
                     <span>OR</span>
                 </div>
-
                 <div class="auth-footer">
                     <p>Don't have an account? <a href="<?= site_url('library/register') ?>">Create Account</a></p>
                     <p class="forgot-password"><a href="<?= site_url('library/forgot-password') ?>">Forgot Password?</a></p>
@@ -92,8 +97,22 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/iziToast.min.js"></script>
     <script>
+        // Function to show notification
+        function showNotification(message, type = 'error') {
+            const container = document.getElementById('notificationContainer');
+            const icon = type === 'error' ? 'exclamation-circle-fill' : 'check-circle-fill';
+            
+            const notificationHTML = `
+                <div class="notification ${type}">
+                    <i class="bi bi-${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            container.innerHTML = notificationHTML;
+        }
+
         // Generate unique tab ID for this login session
         function getTabId() {
             let tabId = sessionStorage.getItem('tabId');
@@ -106,27 +125,6 @@
 
         // Add tab ID to login form before submission
         document.addEventListener('DOMContentLoaded', function() {
-            // Show error notification if exists
-            <?php if (!empty($error)): ?>
-                iziToast.error({
-                    title: 'Error',
-                    message: '<?= htmlspecialchars($error) ?>',
-                    position: 'topRight',
-                    timeout: 5000
-                });
-            <?php endif; ?>
-
-            // Show error flashdata notification if exists
-            <?php $error_msg = $this->session->flashdata('error'); ?>
-            <?php if (!empty($error_msg)): ?>
-                iziToast.error({
-                    title: 'Error',
-                    message: '<?= htmlspecialchars($error_msg) ?>',
-                    position: 'topRight',
-                    timeout: 5000
-                });
-            <?php endif; ?>
-
             const loginForm = document.querySelector('form');
             if (loginForm) {
                 loginForm.addEventListener('submit', function(e) {
@@ -162,28 +160,15 @@
             }
         }
 
-        // Add fade-in animation on load
+        // Show notifications on page load
         window.addEventListener('load', function() {
             document.querySelector('.auth-card').classList.add('loaded');
             
-            // Show success notification if password was reset
-            <?php $success_msg = $this->session->flashdata('success'); ?>
-            <?php if (!empty($success_msg)): ?>
-                try {
-                    iziToast.success({
-                        title: 'Success!',
-                        message: '<?= addslashes(htmlspecialchars($success_msg)) ?>',
-                        position: 'topRight',
-                        timeout: 5000,
-                        icon: 'icon-success'
-                    });
-                    // Hide the bootstrap alert if it exists
-                    const alerts = document.querySelectorAll('.alert');
-                    alerts.forEach(alert => alert.style.display = 'none');
-                } catch(e) {
-                    console.error('iziToast error:', e);
-                }
-            <?php endif; ?>
+            // Check error message from hidden div
+            const errorMsg = document.getElementById('errorMessage').textContent.trim();
+            if (errorMsg) {
+                showNotification(errorMsg, 'error');
+            }
         });
     </script>
 </body>

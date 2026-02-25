@@ -45,6 +45,7 @@ $route['library/members/deactivate/(:num)'] = 'library/deactivate_member/$1';
 $route['library/members/activate/(:num)'] = 'library/activate_member/$1';
 $route['library/browse'] = 'library/browse_books';
 $route['library/browse/view/(:num)'] = 'library/browse_book_details/$1';
+$route['library/get_book_details/(:num)'] = 'library/get_book_details/$1';
 $route['library/my-books'] = 'library/my_books';
 $route['library/history'] = 'library/history';
 $route['library/borrow/(:num)'] = 'library/borrow_book/$1';

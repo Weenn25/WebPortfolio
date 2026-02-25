@@ -87,27 +87,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .book-details-container {
-        animation: fadeIn 0.5s ease-in;
-    }
-
-    .card {
-        border-radius: 8px;
-    }
-
-    .card-header {
-        border-radius: 8px 8px 0 0 !important;
-    }
-
-    .table th {
-        font-weight: 600;
-        color: #2c3e50;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>

@@ -53,7 +53,7 @@
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <a href="<?= site_url('library/books/archive/' . $book['id']) ?>" class="btn btn-sm btn-danger" title="Archive" onclick="return confirm('Are you sure you want to archive this book?')">
-                                <i class="bi bi-trash"></i>
+                                <i class="bi bi-archive"></i>
                             </a>
                         </td>
                     </tr>
@@ -66,48 +66,4 @@
             <i class="bi bi-info-circle"></i> No books found. <a href="#">Add a new book</a> to get started.
         </div>
     <?php endif; ?>
-</div>
-
-<style>
-    .books-container {
-        animation: fadeIn 0.5s ease-in;
-    }
-
-    .page-header h1 {
-        color: #2c3e50;
-        font-weight: 700;
-    }
-
-    .header-line {
-        border: 3px solid #3498db;
-        margin-bottom: 30px;
-    }
-
-    .table {
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .table thead th {
-        font-weight: 600;
-        padding: 15px;
-        border: none;
-    }
-
-    .table tbody td {
-        padding: 12px 15px;
-        vertical-align: middle;
-    }
-
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .btn-sm {
-        margin: 0 2px;
-    }
-</style>
-        
-    </div>
 </div>

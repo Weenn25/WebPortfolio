@@ -88,9 +88,9 @@
                                 <i class="bi bi-eye"></i>
                             </a>
                             <?php if($borrow['status'] !== 'returned'): ?>
-                                <a href="<?= site_url('library/return/' . $borrow['id']) ?>" class="btn btn-sm btn-success" title="Return Book" onclick="return confirm('Are you sure you want to return this book?')">
+                                <button class="btn btn-sm btn-success" title="Return Book" onclick="returnBook(<?= $borrow['id'] ?>)">
                                     <i class="bi bi-arrow-return-left"></i> Return
-                                </a>
+                                </button>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -104,65 +104,41 @@
     <?php endif; ?>
 </div>
 
-<style>
-    .my-books-container {
-        animation: fadeIn 0.5s ease-in;
-    }
-
-    .page-header h1 {
-        color: #2c3e50;
-        font-weight: 700;
-    }
-
-    .header-line {
-        border: 3px solid #3498db;
-        margin-bottom: 30px;
-    }
-
-    .table {
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .table thead th {
-        font-weight: 600;
-        padding: 15px;
-        border: none;
-    }
-
-    .table tbody td {
-        padding: 12px 15px;
-        vertical-align: middle;
-    }
-
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .search-sort-controls {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
-    }
-
-    .results-info {
-        text-align: right;
-    }
-
-    .no-results {
-        text-align: center;
-        padding: 40px;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>
-
 <script>
+function returnBook(borrowId) {
+    iziToast.show({
+        timeout: 20000,
+        layout: 2,
+        title: '<i class="bi bi-arrow-return-left"></i> Return Book',
+        message: 'Are you sure you want to return this book?',
+        position: 'center',
+        backgroundColor: '#3498db',
+        titleColor: '#fff',
+        messageColor: '#fff',
+        titleFontSize: '18px',
+        messageFontSize: '15px',
+        padding: '20px',
+        progressBar: true,
+        progressBarColor: '#fff',
+        icon: false,
+        maxWidth: '500px',
+        animateInside: true,
+        transitionIn: 'fadeInDown',
+        transitionOut: 'fadeOutUp',
+        zindex: 9999,
+        overlay: true,
+        buttons: [
+            ['<button class="btn btn-light btn-sm" style="font-weight: 600; padding: 10px 24px; border: none; cursor: pointer; touch-action: auto;"><i class="bi bi-check-circle"></i> YES, RETURN</button>', function(instance, toast) {
+                instance.hide({ transitionOut: 'fadeOut' }, toast);
+                window.location.href = '<?= site_url("library/return/") ?>' + borrowId;
+            }, true],
+            ['<button class="btn btn-outline-light btn-sm" style="font-weight: 600; padding: 10px 24px; border-width: 2px; cursor: pointer; touch-action: auto;"><i class="bi bi-x-circle"></i> CANCEL</button>', function(instance, toast) {
+                instance.hide({ transitionOut: 'fadeOut' }, toast);
+            }]
+        ]
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const sortSelect = document.getElementById('sortSelect');

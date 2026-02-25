@@ -24,7 +24,7 @@
                             <th width="40%">Member ID:</th>
                             <td><strong>#<?= $member['id'] ?></strong></td>
                         </tr>
-                        <tr>
+                        <tr>1
                             <th>First Name:</th>
                             <td><?= $member['first_name'] ?></td>
                         </tr>

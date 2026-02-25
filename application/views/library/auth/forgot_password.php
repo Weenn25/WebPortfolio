@@ -86,19 +86,25 @@
         window.addEventListener('load', function() {
             document.querySelector('.auth-card').classList.add('loaded');
             
-            // Auto-hide alert after 3 seconds
-            const alert = document.querySelector('.auth-form .alert');
-            if (alert) {
+            // Auto-hide alert only for error messages after 3 seconds
+            const errorAlert = document.querySelector('.auth-form .alert-danger');
+            if (errorAlert) {
                 setTimeout(function() {
-                    alert.style.opacity = '0';
-                    alert.style.maxHeight = '0px';
-                    alert.style.marginBottom = '0px';
-                    alert.style.padding = '0px';
-                    alert.style.overflow = 'hidden';
+                    errorAlert.style.opacity = '0';
+                    errorAlert.style.maxHeight = '0px';
+                    errorAlert.style.marginBottom = '0px';
+                    errorAlert.style.padding = '0px';
+                    errorAlert.style.overflow = 'hidden';
                     setTimeout(function() {
-                        alert.style.display = 'none';
+                        errorAlert.style.display = 'none';
                     }, 400);
                 }, 3000);
+            }
+            
+            // Keep success alerts visible
+            const successAlert = document.querySelector('.auth-form .alert-success');
+            if (successAlert) {
+                // Do not auto-hide success alerts
             }
         });
 
@@ -128,12 +134,5 @@
             }
         });
     </script>
-
-    <style>
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    </style>
 </body>
 </html>

@@ -198,7 +198,7 @@ h3 {
 
 h4 {
     font-size: 1.5rem;
-    color: rgb(255, 255, 255);
+    color: rgb(0, 0, 0);
 }
 
 h5 {
@@ -614,6 +614,8 @@ h6 {
     font-size: 0.95rem;
     border-collapse: collapse;
     color: var(--dark-color);
+    width: 100%;
+    min-width: 100%;
 }
 
 .table thead {
@@ -663,9 +665,30 @@ h6 {
 
 .table-responsive {
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #3498db, #2980b9);
+    border-radius: 4px;
+    border: 2px solid #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #2980b9, #1f618d);
 }
 
 .badge {
@@ -2290,4 +2313,2300 @@ body.auth-page {
     color: white;
     margin: 0;
     font-weight: 700;
+}
+
+/* User Dashboard Styles */
+.dashboard-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.page-header h1 {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.header-line {
+    border: 3px solid #3498db;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card .card-title {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+/* Mobile Responsiveness for Dashboard */
+@media (max-width: 768px) {
+    .page-header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 12px;
+    }
+
+    .stat-card .card-title {
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+    }
+
+    .stat-card .d-flex i {
+        font-size: 2rem !important;
+        margin-right: 10px !important;
+    }
+
+    .card-header {
+        font-size: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .card-body p {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .stat-card .card-title {
+        font-size: 0.75rem;
+        margin-bottom: 6px;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+    }
+
+    .stat-card .d-flex i {
+        font-size: 1.8rem !important;
+        margin-right: 8px !important;
+    }
+
+    .stat-card .card-body {
+        padding: 0.75rem;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    .card-body p {
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .row.mb-4 {
+        margin-bottom: 1rem !important;
+    }
+
+    .col-md-6.col-lg-3.mb-3 {
+        margin-bottom: 0.75rem !important;
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Book Add Page Styles */
+.book-add-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.book-add-container .card {
+    border-radius: 8px;
+}
+
+.book-add-container .card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.book-add-container .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.book-add-container .form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Archived Books Page Styles */
+.archived-books-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.archived-books-container .page-header h1 {
+    color: #495057;
+    font-weight: 700;
+}
+
+.archived-books-container .header-line {
+    border: 3px solid #6c757d;
+    margin-bottom: 30px;
+}
+
+.archived-books-container .table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.archived-books-container .table thead th {
+    font-weight: 600;
+    padding: 15px;
+    border: none;
+}
+
+.archived-books-container .table tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.archived-books-container .table tbody tr:hover {
+    background-color: #e9ecef !important;
+}
+
+.archived-books-container .btn-sm {
+    margin: 0 2px;
+}
+
+/* Book Edit Page Styles */
+.book-edit-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.book-edit-container .card {
+    border-radius: 8px;
+}
+
+.book-edit-container .card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.book-edit-container .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.book-edit-container .form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Books Index Page Styles */
+.books-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.books-container .page-header h1 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.books-container .header-line {
+    border: 3px solid #3498db;
+    margin-bottom: 30px;
+}
+
+.books-container .table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.books-container .table thead th {
+    font-weight: 600;
+    padding: 15px;
+    border: none;
+}
+
+.books-container .table tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.books-container .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.books-container .btn-sm {
+    margin: 0 2px;
+}
+
+/* Login Page - Notification Styles */
+.notification {
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.notification.error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #842029;
+}
+
+.notification.success {
+    background-color: #d1e7dd;
+    border: 1px solid #badbcc;
+    color: #0f5132;
+}
+
+.notification i {
+    font-size: 1.2rem;
+}
+
+.notification.error i {
+    color: #dc3545;
+}
+
+.notification.success i {
+    color: #198754;
+}
+/* ============================================ */
+/* Browse Books Page Styles */
+/* ============================================ */
+.browse-books-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.browse-books-container .page-header h1 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.browse-books-container .header-line {
+    border: 3px solid #3498db;
+    margin-bottom: 30px;
+}
+
+.browse-books-container .book-card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.browse-books-container .book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.browse-books-container .book-card .card-title {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    min-height: 50px;
+}
+
+.browse-books-container .book-card .card-text {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.browse-books-container .availability-info {
+    margin-top: 15px;
+}
+
+.browse-books-container .card-footer {
+    padding: 15px;
+}
+
+.browse-books-container .btn-sm {
+    margin-right: 5px;
+}
+
+.browse-books-container .search-sort-controls {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+/* View dropdown styling */
+.browse-books-container .dropdown-menu {
+    padding: 0.5rem 0 !important;
+}
+
+.browse-books-container .dropdown-menu .btn-check:checked + .dropdown-item {
+    background-color: #e7f3ff;
+    color: #3498db;
+    font-weight: 600;
+}
+
+.browse-books-container .dropdown-menu .dropdown-item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+}
+
+.browse-books-container .dropdown-menu .dropdown-item:hover {
+    background-color: #f8f9fa !important;
+}
+
+.browse-books-container .dropdown-menu .btn-check {
+    display: none;
+}
+
+.browse-books-container .results-info {
+    text-align: right;
+}
+
+.browse-books-container .no-results {
+    text-align: center;
+    padding: 40px;
+}
+
+/* List View Styles */
+.browse-books-container .book-list-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease;
+}
+
+.browse-books-container .book-list-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.browse-books-container .book-list-card .card-body {
+    padding: 1.25rem;
+}
+
+.browse-books-container .book-list-card .card-title {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.browse-books-container .book-list-card .card-text {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.browse-books-container .book-list-card .btn-sm {
+    margin-right: 5px;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+}
+
+/* List view responsive */
+@media (max-width: 768px) {
+    .browse-books-container .book-list-card .card-body .row {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .browse-books-container .book-list-card .card-body .col-md-6,
+    .browse-books-container .book-list-card .card-body .col-md-3 {
+        width: 100%;
+        margin-bottom: 0.75rem;
+    }
+
+    .browse-books-container .book-list-card .text-md-end {
+        text-align: left !important;
+    }
+
+    .browse-books-container .book-list-card .btn-sm {
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ============================================ */
+/* Book Details Page Styles (Browse) */
+/* ============================================ */
+.book-details-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.book-details-container .card {
+    border-radius: 8px;
+}
+
+.book-details-container .card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.book-details-container .table th {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* ============================================ */
+/* Circulation Management Styles */
+/* ============================================ */
+.circulation-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.circulation-container .page-header h1 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.circulation-container .header-line {
+    border: 3px solid #3498db;
+    margin-bottom: 30px;
+}
+
+.circulation-container .table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.circulation-container .table thead th {
+    font-weight: 600;
+    padding: 15px;
+    border: none;
+}
+
+.circulation-container .table tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.circulation-container .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.circulation-container .btn-sm {
+    margin: 0 2px;
+}
+
+.circulation-container .search-sort-controls {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.circulation-container .results-info {
+    text-align: right;
+}
+
+.circulation-container .no-results {
+    text-align: center;
+    padding: 40px;
+}
+
+.circulation-container .pagination-controls {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.circulation-container .pagination {
+    margin-bottom: 0;
+}
+
+.circulation-container .pagination .page-link {
+    color: #ffffff;
+    border-color: #ddd;
+}
+
+.circulation-container .pagination .page-link:hover {
+    color: #2980b9;
+    background-color: #f0f0f0;
+    border-color: #ddd;
+}
+
+.circulation-container .pagination .page-item.active .page-link {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.circulation-container .pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Archived Circulation Specific */
+.circulation-container .header-line.archived {
+    border: 3px solid #6c757d;
+}
+
+.circulation-container .table.archived thead {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+}
+
+.circulation-container .pagination .page-item.active .page-link.archived {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* ============================================ */
+/* My Borrowed Books Page Styles */
+/* ============================================ */
+.my-books-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.my-books-container .page-header h1 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.my-books-container .header-line {
+    border: 3px solid #3498db;
+    margin-bottom: 30px;
+}
+
+.my-books-container .table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.my-books-container .table thead th {
+    font-weight: 600;
+    padding: 15px;
+    border: none;
+}
+
+.my-books-container .table tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.my-books-container .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.my-books-container .search-sort-controls {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.my-books-container .results-info {
+    text-align: right;
+}
+
+.my-books-container .no-results {
+    text-align: center;
+    padding: 40px;
+}
+
+/* ============================================ */
+/* Borrowing History Page Styles */
+/* ============================================ */
+.history-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.history-container .page-header h1 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.history-container .header-line {
+    border: 3px solid #3498db;
+    margin-bottom: 30px;
+}
+
+.history-container .table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.history-container .table thead th {
+    font-weight: 600;
+    padding: 15px;
+    border: none;
+}
+
+.history-container .table tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.history-container .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.history-container .card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================ */
+/* Book Detail View Styles (Admin) */
+/* ============================================ */
+.book-view-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.book-view-container .card {
+    border-radius: 8px;
+}
+
+.book-view-container .card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.book-view-container .table th {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* ============================================ */
+/* User Management Styles */
+/* ============================================ */
+.avatar-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* ============================================ */
+/* Members Management View Styles */
+/* ============================================ */
+.member-view-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.member-view-container > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.member-view-container h1 {
+    color: #2c3e50;
+    font-weight: 700;
+    flex: 1;
+    min-width: 200px;
+}
+
+.member-view-container .card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.member-view-container .card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.member-view-container .table th {
+    font-weight: 600;
+    color: #2c3e50;
+    width: 40%;
+}
+
+.member-view-container .table td {
+    padding: 10px 15px;
+}
+
+.member-view-container .alert {
+    margin-bottom: 1.5rem;
+}
+
+.member-view-container .d-flex {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.member-view-container .d-flex a.btn {
+    
+    min-width: 140px;
+}
+
+/* Mobile responsiveness for member view */
+@media (max-width: 768px) {
+    .member-view-container > div:first-child {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .member-view-container h1 {
+        width: 100%;
+        margin-bottom: 0;
+        font-size: 1.75rem;
+    }
+
+    .member-view-container > div:first-child .btn {
+        width: 100%;
+    }
+
+    .member-view-container .card-body .row {
+        flex-direction: column;
+    }
+
+    .member-view-container .col-md-6 {
+        margin-bottom: 1.5rem;
+    }
+
+    .member-view-container .table {
+        font-size: 0.9rem;
+    }
+
+    .member-view-container .table th,
+    .member-view-container .table td {
+        padding: 8px 10px;
+    }
+
+    .member-view-container .d-flex {
+        flex-direction: column;
+    }
+
+    .member-view-container .d-flex a.btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .member-view-container .card-body {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .member-view-container h1 {
+        font-size: 1.5rem;
+    }
+
+    .member-view-container .card-header {
+        padding: 1rem;
+    }
+
+    .member-view-container .card-header h4 {
+        font-size: 1.1rem;
+    }
+
+    .member-view-container .table {
+        font-size: 0.85rem;
+    }
+
+    .member-view-container .table th {
+        width: 35% !important;
+        font-weight: 600;
+    }
+
+    .member-view-container .table th,
+    .member-view-container .table td {
+        padding: 6px 8px;
+    }
+
+    .member-view-container .card-body {
+        padding: 1rem;
+    }
+
+    .member-view-container .d-flex a.btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .member-view-container .alert {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .member-view-container h5 {
+        font-size: 1rem;
+        margin-top: 1rem;
+    }
+
+    .member-view-container .text-muted {
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================ */
+/* Members List Container Styles */
+/* ============================================ */
+.members-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.members-container .page-header h1 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.members-container .header-line {
+    border: 3px solid #3498db;
+    margin-bottom: 30px;
+}
+
+.members-container .table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.members-container .table thead th {
+    font-weight: 600;
+    padding: 15px;
+    border: none;
+}
+
+.members-container .table tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.members-container .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.members-container .btn-sm {
+    margin: 0 2px;
+}
+
+.members-container > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.members-container h1 {
+    flex: 1;
+    min-width: 200px;
+}
+
+.members-container .page-header > div:last-child {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Mobile responsiveness for members management */
+@media (max-width: 992px) {
+    .members-container .page-header > div:last-child {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .members-container .page-header > div:last-child .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Reset tables for tablets (600px+) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .members-container .table,
+    .members-container .table tbody,
+    .members-container .table thead,
+    .members-container .table tr,
+    .members-container .table td,
+    .members-container .table th {
+        display: table-cell;
+    }
+
+    .members-container .table thead {
+        display: table-header-group;
+    }
+
+    .members-container .table tbody {
+        display: table-row-group;
+    }
+
+    .members-container .table tr {
+        display: table-row;
+    }
+
+    .members-container .table td::before {
+        display: none;
+    }
+
+    .member-view-container .table,
+    .member-view-container .table tbody,
+    .member-view-container .table thead,
+    .member-view-container .table tr,
+    .member-view-container .table td,
+    .member-view-container .table th {
+        display: table-cell;
+    }
+
+    .member-view-container .table thead {
+        display: table-header-group;
+    }
+
+    .member-view-container .table tbody {
+        display: table-row-group;
+    }
+
+    .member-view-container .table tr {
+        display: table-row;
+    }
+
+    .member-view-container .table td {
+        display: table-cell;
+        padding: 10px 8px;
+    }
+
+    .member-view-container .table td::before {
+        display: none;
+    }
+
+    .member-view-container .table td {
+        justify-content: flex-start;
+        padding-left: 0;
+        align-items: middle;
+    }
+}
+
+@media (max-width: 768px) {
+    .members-container .table {
+        font-size: 0.9rem;
+    }
+
+    .members-container .table thead th {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+    }
+
+    .members-container .table tbody td {
+        padding: 8px 6px;
+    }
+
+    .members-container .btn-sm {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+        margin: 0 1px;
+    }
+
+    .members-container .btn-sm i {
+        font-size: 0.8rem;
+    }
+
+    .members-container h1 {
+        font-size: 1.75rem;
+    }
+
+    .members-container .page-header {
+        margin-bottom: 1rem;
+    }
+
+    .members-container .table-responsive {
+        border-radius: 6px;
+    }
+}
+
+@media (max-width: 576px) {
+    .members-container h1 {
+        font-size: 1.5rem;
+        width: 100%;
+    }
+
+    .members-container > div:first-child {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .members-container .page-header > div:last-child {
+        width: 100%;
+    }
+
+    .members-container .page-header > div:last-child .btn {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .members-container .table {
+        font-size: 0.8rem;
+    }
+
+    .members-container .table thead th {
+        padding: 8px 4px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+    }
+
+    .members-container .table tbody td {
+        padding: 6px 4px;
+        word-break: break-word;
+    }
+
+    .members-container .table tbody td strong {
+        display: block;
+    }
+
+    .members-container .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+        margin: 0 0px;
+        min-width: 28px;
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .members-container .btn-sm i {
+        font-size: 0.75rem;
+        margin-right: 0;
+    }
+
+    .members-container .badge {
+        font-size: 0.65rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .members-container .alert {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ============================================ */
+/* Member Add/Edit Form Styles */
+/* ============================================ */
+.member-add-container,
+.member-edit-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.member-add-container > div:first-child,
+.member-edit-container > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.member-add-container h1,
+.member-edit-container h1 {
+    flex: 1;
+    min-width: 200px;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.member-add-container .card,
+.member-edit-container .card {
+    border-radius: 8px;
+}
+
+.member-add-container .card-header,
+.member-edit-container .card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.member-add-container .form-label,
+.member-edit-container .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.member-add-container .form-control:focus,
+.member-edit-container .form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.member-add-container .d-flex,
+.member-edit-container .d-flex {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Mobile responsiveness for member forms */
+@media (max-width: 768px) {
+    .member-add-container > div:first-child,
+    .member-edit-container > div:first-child {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .member-add-container h1,
+    .member-edit-container h1 {
+        width: 100%;
+        font-size: 1.75rem;
+        margin-bottom: 0;
+    }
+
+    .member-add-container > div:first-child .btn,
+    .member-edit-container > div:first-child .btn {
+        width: 100%;
+    }
+
+    .member-add-container .row,
+    .member-edit-container .row {
+        flex-direction: column;
+    }
+
+    .member-add-container .col-md-6,
+    .member-edit-container .col-md-6 {
+        width: 100%;
+    }
+
+    .member-add-container .card-body,
+    .member-edit-container .card-body {
+        padding: 1.5rem;
+    }
+
+    .member-add-container .form-label,
+    .member-edit-container .form-label {
+        font-size: 0.95rem;
+    }
+
+    .member-add-container .form-control,
+    .member-edit-container .form-control {
+        font-size: 0.95rem;
+    }
+
+    .member-add-container .d-flex,
+    .member-edit-container .d-flex {
+        flex-direction: column;
+    }
+
+    .member-add-container .d-flex .btn,
+    .member-edit-container .d-flex .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .member-add-container h1,
+    .member-edit-container h1 {
+        font-size: 1.5rem;
+    }
+
+    .member-add-container .card-header,
+    .member-edit-container .card-header {
+        padding: 1rem;
+    }
+
+    .member-add-container .card-header h4,
+    .member-edit-container .card-header h4 {
+        font-size: 1.1rem;
+    }
+
+    .member-add-container .card-body,
+    .member-edit-container .card-body {
+        padding: 1rem;
+    }
+
+    .member-add-container .form-label,
+    .member-edit-container .form-label {
+        font-size: 0.9rem;
+    }
+
+    .member-add-container .form-control,
+    .member-edit-container .form-control {
+        font-size: 0.9rem;
+        padding: 0.75rem 0.85rem;
+    }
+
+    .member-add-container .text-danger,
+    .member-edit-container .text-danger {
+        font-size: 1rem;
+    }
+
+    .member-add-container small,
+    .member-edit-container small {
+        font-size: 0.8rem;
+    }
+
+    .member-add-container .btn-lg,
+    .member-edit-container .btn-lg {
+        padding: 0.6rem 1.5rem;
+        font-size: 0.85rem;
+    }
+
+    .member-add-container .d-flex .btn,
+    .member-edit-container .d-flex .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .member-add-container hr,
+    .member-edit-container hr {
+        margin: 1.5rem 0;
+    }
+}
+
+/* ============================================ */
+/* Ultra Mobile (320px - Extra Small Screens) */
+/* Fully Responsive Table Layout */
+/* ============================================ */
+@media (max-width: 480px) {
+    /* Convert table to stack view */
+    .members-container .table-responsive {
+        overflow-x: visible;
+        -webkit-overflow-scrolling: auto;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .members-container .table,
+    .members-container .table tbody,
+    .members-container .table thead,
+    .members-container .table tr,
+    .members-container .table td,
+    .members-container .table th {
+        display: block;
+        width: 100%;
+    }
+
+    .members-container .table thead {
+        display: none;
+    }
+
+    .members-container .table tbody {
+        padding: 0;
+    }
+
+    .members-container .table tbody tr {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        background-color: white;
+    }
+
+    .members-container .table tbody tr:hover {
+        background-color: white;
+        border-color: #3498db;
+    }
+
+    .members-container .table td {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 0;
+        border: none;
+        text-align: left;
+        position: relative;
+        padding-left: 0;
+        font-size: 0.85rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+        min-height: 24px;
+    }
+
+    .members-container .table td::before {
+        content: attr(data-label);
+        position: static;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    .members-container .table td:first-child::before {
+        content: "ID";
+    }
+
+    .members-container .table td:nth-child(2)::before {
+        content: "Name";
+    }
+
+    .members-container .table td:nth-child(3)::before {
+        content: "Email";
+    }
+
+    .members-container .table td:nth-child(4)::before {
+        content: "Phone";
+    }
+
+    .members-container .table td:nth-child(5)::before {
+        content: "Address";
+    }
+
+    .members-container .table td:nth-child(6)::before {
+        content: "Member Since";
+    }
+
+    .members-container .table td:nth-child(7)::before {
+        content: "Status";
+    }
+
+    .members-container .table td:nth-child(8)::before {
+        content: "Actions";
+    }
+
+    .members-container .table td:last-child {
+        padding-left: 0;
+        display: flex;
+        justify-content: flex-start;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        padding-top: 8px;
+    }
+
+    .members-container .table td:last-child::before {
+        display: none;
+    }
+
+    .members-container .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+        min-width: 32px;
+        min-height: 30px;
+    }
+
+    .members-container .btn-sm i {
+        font-size: 0.7rem;
+    }
+
+    .members-container .badge {
+        font-size: 0.7rem;
+        padding: 0.35rem 0.6rem;
+    }
+
+    .members-container h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .members-container .page-header {
+        margin-bottom: 1rem;
+    }
+
+    .members-container .page-header > div:last-child {
+        width: 100%;
+    }
+
+    .members-container .page-header .btn {
+        width: 100%;
+        font-size: 0.8rem;
+        padding: 0.6rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Circulation Management Responsive Table */
+    .circulation-container .table-responsive {
+        overflow-x: visible;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .circulation-container .table,
+    .circulation-container .table tbody,
+    .circulation-container .table thead,
+    .circulation-container .table tr,
+    .circulation-container .table td,
+    .circulation-container .table th {
+        display: block;
+        width: 100%;
+    }
+
+    .circulation-container .table thead {
+        display: none;
+    }
+
+    .circulation-container .table tbody tr {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        background-color: white;
+    }
+
+    .circulation-container .table tbody tr:hover {
+        background-color: white;
+        border-color: #3498db;
+    }
+
+    .circulation-container .table td {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 0;
+        border: none;
+        text-align: left;
+        position: relative;
+        padding-left: 0;
+        font-size: 0.85rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+        min-height: 24px;
+    }
+
+    .circulation-container .table td::before {
+        position: static;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    .circulation-container .table td:nth-child(1)::before {
+        content: "ID";
+    }
+
+    .circulation-container .table td:nth-child(2)::before {
+        content: "Book Title";
+    }
+
+    .circulation-container .table td:nth-child(3)::before {
+        content: "Member Name";
+    }
+
+    .circulation-container .table td:nth-child(4)::before {
+        content: "Borrow Date";
+    }
+
+    .circulation-container .table td:nth-child(5)::before {
+        content: "Due Date";
+    }
+
+    .circulation-container .table td:nth-child(6)::before {
+        content: "Return Date";
+    }
+
+    .circulation-container .table td:nth-child(7)::before {
+        content: "Status";
+    }
+
+    .circulation-container .table td:nth-child(8)::before {
+        content: "Actions";
+    }
+
+    .circulation-container .table td:last-child {
+        padding-left: 0;
+        display: flex;
+        justify-content: flex-start;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        padding-top: 8px;
+    }
+
+    .circulation-container .table td:last-child::before {
+        display: none;
+    }
+
+    .circulation-container .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+        min-width: 32px;
+        min-height: 30px;
+    }
+
+    .circulation-container .badge {
+        font-size: 0.7rem;
+        padding: 0.35rem 0.6rem;
+    }
+
+    .circulation-container h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .circulation-container .page-header {
+        margin-bottom: 1rem;
+    }
+
+    .circulation-container .search-sort-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .circulation-container .search-sort-controls .col-md-6,
+    .circulation-container .search-sort-controls .col-md-4,
+    .circulation-container .search-sort-controls .col-md-2 {
+        max-width: 100% !important;
+        flex-basis: 100% !important;
+    }
+
+    /* Books Management Responsive Table */
+    .books-container .table-responsive {
+        overflow-x: visible;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .books-container .table,
+    .books-container .table tbody,
+    .books-container .table thead,
+    .books-container .table tr,
+    .books-container .table td,
+    .books-container .table th {
+        display: block;
+        width: 100%;
+    }
+
+    .books-container .table thead {
+        display: none;
+    }
+
+    .books-container .table tbody tr {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        background-color: white;
+    }
+
+    .books-container .table tbody tr:hover {
+        background-color: white;
+        border-color: #3498db;
+    }
+
+    .books-container .table td {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 0;
+        border: none;
+        text-align: left;
+        position: relative;
+        padding-left: 0;
+        font-size: 0.85rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+        min-height: 24px;
+    }
+
+    .books-container .table td::before {
+        position: static;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    .books-container .table td:nth-child(1)::before {
+        content: "ID";
+    }
+
+    .books-container .table td:nth-child(2)::before {
+        content: "Title";
+    }
+
+    .books-container .table td:nth-child(3)::before {
+        content: "Author";
+    }
+
+    .books-container .table td:nth-child(4)::before {
+        content: "Quantity";
+    }
+
+    .books-container .table td:nth-child(5)::before {
+        content: "Available";
+    }
+
+    .books-container .table td:nth-child(6)::before {
+        content: "Status";
+    }
+
+    .books-container .table td:nth-child(7)::before {
+        content: "Actions";
+    }
+
+    .books-container .table td:last-child {
+        padding-left: 0;
+        display: flex;
+        justify-content: flex-start;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        padding-top: 8px;
+    }
+
+    .books-container .table td:last-child::before {
+        display: none;
+    }
+
+    .books-container .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+        min-width: 32px;
+        min-height: 30px;
+    }
+
+    .books-container .badge {
+        font-size: 0.7rem;
+        padding: 0.35rem 0.6rem;
+    }
+
+    .books-container h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .books-container .page-header {
+        margin-bottom: 1rem;
+    }
+
+    .books-container .page-header > div:last-child {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .books-container .page-header .btn {
+        width: 100%;
+        font-size: 0.8rem;
+        padding: 0.6rem;
+    }
+
+    /* Archived Books Responsive Table */
+    .archived-books-container .table-responsive {
+        overflow-x: visible;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .archived-books-container .table,
+    .archived-books-container .table tbody,
+    .archived-books-container .table thead,
+    .archived-books-container .table tr,
+    .archived-books-container .table td,
+    .archived-books-container .table th {
+        display: block;
+        width: 100%;
+    }
+
+    .archived-books-container .table thead {
+        display: none;
+    }
+
+    .archived-books-container .table tbody tr {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        background-color: white;
+    }
+
+    .archived-books-container .table tbody tr:hover {
+        background-color: white;
+        border-color: #3498db;
+    }
+
+    .archived-books-container .table td {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 0;
+        border: none;
+        text-align: left;
+        position: relative;
+        padding-left: 0;
+        font-size: 0.85rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+        min-height: 24px;
+    }
+
+    .archived-books-container .table td::before {
+        position: static;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    .archived-books-container .table td:nth-child(1)::before {
+        content: "ID";
+    }
+
+    .archived-books-container .table td:nth-child(2)::before {
+        content: "Title";
+    }
+
+    .archived-books-container .table td:nth-child(3)::before {
+        content: "Author";
+    }
+
+    .archived-books-container .table td:nth-child(4)::before {
+        content: "Quantity";
+    }
+
+    .archived-books-container .table td:nth-child(5)::before {
+        content: "Available";
+    }
+
+    .archived-books-container .table td:nth-child(6)::before {
+        content: "Status";
+    }
+
+    .archived-books-container .table td:nth-child(7)::before {
+        content: "Actions";
+    }
+
+    .archived-books-container .table td:last-child {
+        padding-left: 0;
+        display: flex;
+        justify-content: flex-start;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        padding-top: 8px;
+    }
+
+    .archived-books-container .table td:last-child::before {
+        display: none;
+    }
+
+    .archived-books-container .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+        min-width: 32px;
+        min-height: 30px;
+    }
+
+    .archived-books-container h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .archived-books-container .page-header {
+        margin-bottom: 1rem;
+    }
+
+    /* Archived Circulation Responsive Table */
+    .circulation-container.archived .table-responsive {
+        overflow-x: visible;
+    }
+
+    .circulation-container.archived .table,
+    .circulation-container.archived .table tbody,
+    .circulation-container.archived .table thead,
+    .circulation-container.archived .table tr,
+    .circulation-container.archived .table td,
+    .circulation-container.archived .table th {
+        display: block;
+        width: 100%;
+    }
+
+    .circulation-container.archived .table thead {
+        display: none;
+    }
+
+    .circulation-container.archived .table tbody tr {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        background-color: white;
+    }
+
+    .circulation-container.archived .table tbody tr:hover {
+        background-color: white;
+        border-color: #3498db;
+    }
+
+    .circulation-container.archived .table td {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 0;
+        border: none;
+        text-align: left;
+        position: relative;
+        padding-left: 0;
+        font-size: 0.85rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+        min-height: 24px;
+    }
+
+    .circulation-container.archived .table td::before {
+        position: static;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    .circulation-container.archived .table td:nth-child(1)::before {
+        content: "ID";
+    }
+
+    .circulation-container.archived .table td:nth-child(2)::before {
+        content: "Book Title";
+    }
+
+    .circulation-container.archived .table td:nth-child(3)::before {
+        content: "Member Name";
+    }
+
+    .circulation-container.archived .table td:nth-child(4)::before {
+        content: "Borrow Date";
+    }
+
+    .circulation-container.archived .table td:nth-child(5)::before {
+        content: "Due Date";
+    }
+
+    .circulation-container.archived .table td:nth-child(6)::before {
+        content: "Return Date";
+    }
+
+    .circulation-container.archived .table td:nth-child(7)::before {
+        content: "Status";
+    }
+
+    .circulation-container.archived .table td:nth-child(8)::before {
+        content: "Actions";
+    }
+
+    .circulation-container.archived .table td:last-child {
+        padding-left: 0;
+        display: flex;
+        justify-content: flex-start;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        padding-top: 8px;
+    }
+
+    .circulation-container.archived .table td:last-child::before {
+        display: none;
+    }
+
+    /* Member view table */
+    .member-view-container .table-responsive {
+        overflow-x: visible;
+    }
+
+    .member-view-container .table,
+    .member-view-container .table tbody,
+    .member-view-container .table thead,
+    .member-view-container .table tr,
+    .member-view-container .table td,
+    .member-view-container .table th {
+        display: block;
+        width: 100%;
+    }
+
+    .member-view-container .table thead {
+        display: none;
+    }
+
+    .member-view-container .table thead th {
+        display: none;
+    }
+
+    .member-view-container .table tbody tr {
+        border: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .member-view-container .table td {
+        display: flex;
+        flex-direction: column;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 0.9rem;
+        position: relative;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+        min-height: 24px;
+    }
+
+    .member-view-container .table td:last-child {
+        border-bottom: 2px solid #3498db;
+    }
+
+    .member-view-container .table th {
+        display: none;
+    }
+
+    .member-view-container .table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 0.85rem;
+        min-width: 120px;
+    }
+
+    .member-view-container .d-flex {
+        display: flex !important;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .member-view-container .d-flex a.btn,
+    .member-view-container .d-flex > div .btn {
+        width: auto !important;
+        padding: 0.65rem 1.5rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    .member-view-container h1 {
+        font-size: 1.4rem;
+    }
+
+    .member-view-container .card-header h4 {
+        font-size: 1rem;
+    }
+
+    .member-view-container .card-body {
+        padding: 1rem;
+    }
+
+    /* Inactive members table */
+    .members-container .table tbody tr style {
+        background-color: transparent;
+    }
+}
+
+/* Extra Small Devices (360px and below) */
+@media (max-width: 360px) {
+    .members-container .table td {
+        padding-left: 40%;
+        font-size: 0.8rem;
+    }
+
+    .members-container .table td::before {
+        font-size: 0.75rem;
+    }
+
+    .members-container .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.6rem;
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    .members-container .badge {
+        font-size: 0.65rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .members-container .page-header {
+        margin-bottom: 0.75rem;
+    }
+
+    .members-container h1 {
+        font-size: 1.3rem;
+    }
+
+    /* Circulation Management - Extra Small */
+    .circulation-container .table td {
+        padding-left: 40%;
+        font-size: 0.8rem;
+    }
+
+    .circulation-container .table td::before {
+        font-size: 0.75rem;
+    }
+
+    .circulation-container .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.6rem;
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    .circulation-container .badge {
+        font-size: 0.65rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .circulation-container h1 {
+        font-size: 1.3rem;
+    }
+
+    /* Books Management - Extra Small */
+    .books-container .table td {
+        padding-left: 40%;
+        font-size: 0.8rem;
+    }
+
+    .books-container .table td::before {
+        font-size: 0.75rem;
+    }
+
+    .books-container .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.6rem;
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    .books-container .badge {
+        font-size: 0.65rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .books-container h1 {
+        font-size: 1.3rem;
+    }
+
+    .member-view-container .table td {
+        font-size: 0.85rem;
+        padding: 10px 0;
+    }
+
+    .member-view-container .table td::before {
+        font-size: 0.8rem;
+        min-width: 100px;
+    }
+
+    .member-view-container h1 {
+        font-size: 1.35rem;
+    }
+
+    .member-view-container .card-header h4 {
+        font-size: 0.95rem;
+    }
+
+    .member-view-container .d-flex a.btn,
+    .member-view-container .d-flex > div .btn {
+        padding: 0.55rem 0.8rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* Modal at Extra Small Screens */
+    .modal.show {
+        padding: 10px !important;
+        z-index: 1050 !important;
+    }
+
+    .modal-dialog {
+        max-width: 95vw !important;
+        width: 95vw !important;
+        margin: auto !important;
+    }
+
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+        pointer-events: auto !important;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-body {
+        padding: 1rem;
+        font-size: 0.9rem;
+        pointer-events: auto;
+    }
+
+    .modal-backdrop {
+        opacity: 0.5 !important;
+    }
+
+    /* Ensure buttons are clickable */
+    .btn {
+        pointer-events: auto !important;
+        touch-action: manipulation;
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .book-card .btn {
+        pointer-events: auto !important;
+    }
+
+    /* Archived Books Management - Extra Small */
+    .archived-books-container .table td {
+        padding-left: 40%;
+        font-size: 0.8rem;
+    }
+
+    .archived-books-container .table td::before {
+        font-size: 0.75rem;
+    }
+
+    .archived-books-container .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.6rem;
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    .archived-books-container .badge {
+        font-size: 0.65rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .archived-books-container h1 {
+        font-size: 1.3rem;
+    }
+
+    /* Archived Circulation - Extra Small */
+    .circulation-container.archived .table td {
+        padding-left: 40%;
+        font-size: 0.8rem;
+    }
+
+    .circulation-container.archived .table td::before {
+        font-size: 0.75rem;
+    }
+
+    .circulation-container.archived .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.6rem;
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    .circulation-container.archived .badge {
+        font-size: 0.65rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .circulation-container.archived h1 {
+        font-size: 1.3rem;
+    }
+
+    /* Book card buttons - Ensure clickability at mobile */
+    .browse-books-container .card-footer .btn {
+        pointer-events: auto !important;
+        touch-action: auto;
+        min-height: 44px;
+        display: inline-block;
+        margin: 4px 4px 0 0;
+    }
+
+    /* Book Details Modal - Centered */
+    .modal {
+        display: none !important;
+        pointer-events: none;
+    }
+
+    .modal.show {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        pointer-events: auto;
+    }
+
+    .modal.show .modal-dialog {
+        margin: 0 !important;
+    }
+
+    .modal-dialog {
+        max-width: 600px;
+        width: 90%;
+        margin: auto;
+    }
+
+    .modal-backdrop {
+        display: none !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1040;
+        pointer-events: none;
+        opacity: 0;
+        background-color: rgba(0, 0, 0, 0);
+        transition: opacity 0.15s linear;
+    }
+
+    .modal-backdrop.show {
+        display: block !important;
+        opacity: 0.5;
+        pointer-events: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        border: none;
+        box-shadow: 0 0.5rem 1.5rem rgba(44, 62, 80, 0.3);
+        border-radius: 0.75rem;
+        z-index: 1050;
+        position: relative;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        color: white;
+        border: none;
+        border-radius: 0.75rem 0.75rem 0 0;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .book-details-content h4 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .book-details-content p {
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+    }
 }

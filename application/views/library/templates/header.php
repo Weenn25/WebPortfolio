@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/images/favicon.svg') ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="<?= base_url('assets/css/library.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/library.css') ?>">>
     <style>
         body {
             padding-top: 70px;
@@ -388,7 +388,7 @@
         }
     </script>
     <!-- Top Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1030 !important;">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="<?= site_url('library/dashboard?active_role=' . urlencode($this->session->userdata('library_role') ?? 'member')) ?>">
                 <i class="bi bi-book"></i> Library System
@@ -436,7 +436,7 @@
                 
                 <li class="nav-item">
                     <a class="nav-link <?= ($page_title ?? '') === 'Dashboard' || ($page_title ?? '') === 'My Dashboard' ? 'active' : '' ?>" 
-                       href="<?= $is_admin ? site_url('library/admin-dashboard' . $role_param) : site_url('library/user-dashboard' . $role_param) ?>"
+                       href="<?= $is_admin ? site_url('library/admin-dashboard') : site_url('library/user-dashboard') ?>"
                        title="Dashboard">
                         <i class="bi bi-speedometer2"></i>
                         <span>Dashboard</span>
@@ -478,7 +478,7 @@
                     </li>
                 <?php else: ?>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Browse Books' ? 'active' : '' ?>" href="<?= site_url('library/browse' . $role_param) ?>" title="Browse Books">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Browse Books' ? 'active' : '' ?>" href="<?= site_url('library/browse') ?>" title="Browse Books">
                             <i class="bi bi-search"></i>
                             <span>Browse Books</span>
                         </a>

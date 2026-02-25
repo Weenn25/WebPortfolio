@@ -7,10 +7,10 @@
     <link rel="icon" type="image/svg+xml" href="<?= base_url('assets/images/favicon.svg') ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/iziToast.min.css">
     <link rel="stylesheet" href="<?= base_url('assets/css/library.css') ?>">
 </head>
 <body class="auth-page">
+    <div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1050;\"></div>
     <div class="auth-background">
         <div class="auth-shapes">
             <div class="shape shape-1"></div>
@@ -79,8 +79,31 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/iziToast.min.js"></script>
     <script>
+        // Show error notification using Bootstrap Toast
+        function showErrorNotification(message) {
+            const container = document.getElementById('notificationContainer');
+            const toastId = 'toast-' + Date.now();
+            const toastHTML = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header bg-danger text-white">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <strong class="me-auto">Error</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', toastHTML);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+            // Remove after close
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                toastElement.remove();
+            });
+        }
+
         function togglePassword(inputId, iconId) {
             const passwordInput = document.getElementById(inputId);
             const toggleIcon = document.getElementById(iconId);
@@ -99,12 +122,7 @@
         // Validate passwords match before submit
         document.addEventListener('DOMContentLoaded', function() {
             <?php if (!empty($error)): ?>
-                iziToast.error({
-                    title: 'Error',
-                    message: '<?= htmlspecialchars($error) ?>',
-                    position: 'topRight',
-                    timeout: 5000
-                });
+                showErrorNotification('<?= htmlspecialchars($error) ?>');
             <?php endif; ?>
 
             // Handle form submission to validate passwords match
@@ -116,12 +134,7 @@
                     
                     if (password !== passwordConfirm) {
                         e.preventDefault();
-                        iziToast.error({
-                            title: 'Error',
-                            message: 'Passwords do not match. Please try again.',
-                            position: 'topRight',
-                            timeout: 5000
-                        });
+                        showErrorNotification('Passwords do not match. Please try again.');
                         return false;
                     }
                 });

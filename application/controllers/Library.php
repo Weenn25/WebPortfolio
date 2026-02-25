@@ -111,83 +111,83 @@ class Library extends CI_Controller {
      * Determine the active role for this request from multiple sources
      * Priority: Query param > Session determination > Fallback to default
      */
-    private function getActiveRole() {
-        // Priority 1: Check if role is explicitly passed as query/post parameter
-        if ($this->input->get('active_role')) {
-            return $this->input->get('active_role');
-        }
-        if ($this->input->post('active_role')) {
-            return $this->input->post('active_role');
-        }
+    // private function getActiveRole() {
+    //     // Priority 1: Check if role is explicitly passed as query/post parameter
+    //     if ($this->input->get('active_role')) {
+    //         return $this->input->get('active_role');
+    //     }
+    //     if ($this->input->post('active_role')) {
+    //         return $this->input->post('active_role');
+    //     }
         
-        // Priority 2: Check request header for role (sent by client JavaScript)
-        $header_role = $this->input->request_headers('X-Active-Role');
-        if ($header_role) {
-            return $header_role;
-        }
+    //     // Priority 2: Check request header for role (sent by client JavaScript)
+    //     $header_role = $this->input->request_headers('X-Active-Role');
+    //     if ($header_role) {
+    //         return $header_role;
+    //     }
         
-        // Priority 3: Check the current URI path to determine context
-        $current_uri = $this->uri->segment(2); // Get the controller method
-        if ($current_uri === 'user-dashboard' || 
-            $current_uri === 'browse' || 
-            $current_uri === 'my-books' || 
-            $current_uri === 'history' ||
-            $current_uri === 'borrow-book' ||
-            $current_uri === 'profile') {
-            return 'member';
-        }
-        if ($current_uri === 'admin-dashboard' || 
-            $current_uri === 'books' || 
-            $current_uri === 'members' || 
-            $current_uri === 'circulation' || 
-            $current_uri === 'pending-users' || 
-            $current_uri === 'approved-users' ||
-            $current_uri === 'approve-user' ||
-            $current_uri === 'reject-user' ||
-            $current_uri === 'deactivate-user') {
-            return 'admin';
-        }
+    //     // Priority 3: Check the current URI path to determine context
+    //     $current_uri = $this->uri->segment(2); // Get the controller method
+    //     if ($current_uri === 'user-dashboard' || 
+    //         $current_uri === 'browse' || 
+    //         $current_uri === 'my-books' || 
+    //         $current_uri === 'history' ||
+    //         $current_uri === 'borrow-book' ||
+    //         $current_uri === 'profile') {
+    //         return 'member';
+    //     }
+    //     if ($current_uri === 'admin-dashboard' || 
+    //         $current_uri === 'books' || 
+    //         $current_uri === 'members' || 
+    //         $current_uri === 'circulation' || 
+    //         $current_uri === 'pending-users' || 
+    //         $current_uri === 'approved-users' ||
+    //         $current_uri === 'approve-user' ||
+    //         $current_uri === 'reject-user' ||
+    //         $current_uri === 'deactivate-user') {
+    //         return 'admin';
+    //     }
         
-        // Priority 4: Check the Referer header for context clues
-        $referer = $this->input->server('HTTP_REFERER') ?: '';
-        if (strpos($referer, 'admin-dashboard') !== false || 
-            strpos($referer, 'approved-users') !== false || 
-            strpos($referer, 'pending-users') !== false || 
-            strpos($referer, 'deactivate-user') !== false ||
-            strpos($referer, 'approve-user') !== false || 
-            strpos($referer, 'reject-user') !== false ||
-            strpos($referer, 'books') !== false ||
-            strpos($referer, 'members') !== false ||
-            strpos($referer, 'circulation') !== false ||
-            strpos($referer, 'active_role=admin') !== false) {
-            return 'admin';
-        }
-        if (strpos($referer, 'user-dashboard') !== false ||
-            strpos($referer, 'browse') !== false ||
-            strpos($referer, 'my-books') !== false ||
-            strpos($referer, 'history') !== false ||
-            strpos($referer, 'active_role=member') !== false) {
-            return 'member';
-        }
+    //     // Priority 4: Check the Referer header for context clues
+    //     $referer = $this->input->server('HTTP_REFERER') ?: '';
+    //     if (strpos($referer, 'admin-dashboard') !== false || 
+    //         strpos($referer, 'approved-users') !== false || 
+    //         strpos($referer, 'pending-users') !== false || 
+    //         strpos($referer, 'deactivate-user') !== false ||
+    //         strpos($referer, 'approve-user') !== false || 
+    //         strpos($referer, 'reject-user') !== false ||
+    //         strpos($referer, 'books') !== false ||
+    //         strpos($referer, 'members') !== false ||
+    //         strpos($referer, 'circulation') !== false ||
+    //         strpos($referer, 'active_role=admin') !== false) {
+    //         return 'admin';
+    //     }
+    //     if (strpos($referer, 'user-dashboard') !== false ||
+    //         strpos($referer, 'browse') !== false ||
+    //         strpos($referer, 'my-books') !== false ||
+    //         strpos($referer, 'history') !== false ||
+    //         strpos($referer, 'active_role=member') !== false) {
+    //         return 'member';
+    //     }
         
-        // Priority 5: If only one role is logged in, use that
-        $admin_id = $this->session->userdata('admin_user_id');
-        $member_id = $this->session->userdata('member_user_id');
+    //     // Priority 5: If only one role is logged in, use that
+    //     $admin_id = $this->session->userdata('admin_user_id');
+    //     $member_id = $this->session->userdata('member_user_id');
         
-        if ($admin_id && !$member_id) {
-            return 'admin';
-        }
-        if ($member_id && !$admin_id) {
-            return 'member';
-        }
+    //     if ($admin_id && !$member_id) {
+    //         return 'admin';
+    //     }
+    //     if ($member_id && !$admin_id) {
+    //         return 'member';
+    //     }
         
-        // Default to member if both present (safer for user)
-        if ($member_id && $admin_id) {
-            return 'member';
-        }
+    //     // Default to member if both present (safer for user)
+    //     if ($member_id && $admin_id) {
+    //         return 'member';
+    //     }
         
-        return null;
-    }
+    //     return null;
+    // }
 
     /**
      * Helper method to maintain library_* variables based on determined active role
@@ -269,12 +269,15 @@ class Library extends CI_Controller {
         $member_id = $this->session->userdata('member_user_id');
         $member_role = $this->session->userdata('member_role');
         
+
+        
+        
         if (!$member_id || $member_role !== 'member') {
             redirect('library/login');
         }
 
-        // If admin is also logged in, allow access to user dashboard
-        $admin_id = $this->session->userdata('admin_user_id');
+        // // If admin is also logged in, allow access to user dashboard
+        // $admin_id = $this->session->userdata('admin_user_id');
 
         $user_id = $member_id;
         $data['page_title'] = 'My Dashboard';
@@ -314,6 +317,26 @@ class Library extends CI_Controller {
         $this->load->view('library/templates/header', $data);
         $this->load->view('library/browse_books', $data);
         $this->load->view('library/templates/footer');
+    }
+
+    /**
+     * Get Book Details (AJAX)
+     */
+    public function get_book_details($id) {
+        if (!$this->session->userdata('library_user_id')) {
+            $this->output->set_content_type('application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        $book = $this->Library_model->get_book($id);
+        
+        $this->output->set_content_type('application/json');
+        if ($book) {
+            echo json_encode(['success' => true, 'book' => $book]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Book not found']);
+        }
     }
 
     /**
@@ -1127,18 +1150,18 @@ class Library extends CI_Controller {
             // Get form data
 
             
-            $isbn = trim($this->input->post('isbn',true));
-            $title = trim($this->input->post('title'));
-            $author = trim($this->input->post('author'));
-            $publisher = trim($this->input->post('publisher'));
-            $publication_year = $this->input->post('publication_year');
-            $total_quantity = $this->input->post('total_quantity');
-            $available_quantity = $this->input->post('available_quantity');
-            $description = trim($this->input->post('description'));
+            
+            $title = trim($this->input->post('title',true));
+            $author = trim($this->input->post('author',true));
+            $publisher = trim($this->input->post('publisher',true));
+            $publication_year = $this->input->post('publication_year', true);
+            $total_quantity = $this->input->post('total_quantity', true);
+            $available_quantity = $this->input->post('available_quantity', true);
+            $description = trim($this->input->post('description',true));
 
             // Validate required fields
-            if (empty($isbn) || empty($title) || empty($author)) {
-                $this->session->set_flashdata('error', 'ISBN, Title, and Author are required fields');
+            if (empty($title) || empty($author)) {
+                $this->session->set_flashdata('error', 'Title and Author are required fields');
                 redirect('library/books/add');
             }
 
@@ -1148,17 +1171,10 @@ class Library extends CI_Controller {
                 redirect('library/books/add');
             }
 
-            // Check if ISBN already exists
-            $existing_book = $this->Library_model->get_book_by_isbn($isbn);
-            
-            if ($existing_book) {
-                $this->session->set_flashdata('error', 'A book with this ISBN already exists');
-                redirect('library/books/add');
-            }
+
 
             // Prepare data for insertion
             $data = array(
-                'isbn' => $isbn,
                 'title' => $title,
                 'author' => $author,
                 'publisher' => $publisher,
@@ -1257,7 +1273,6 @@ class Library extends CI_Controller {
 
         if ($this->input->post()) {
             $data = [
-                'isbn' => $this->input->post('isbn'),
                 'title' => $this->input->post('title'),
                 'author' => $this->input->post('author'),
                 'publisher' => $this->input->post('publisher'),
