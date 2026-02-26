@@ -70,20 +70,6 @@
                 </div>
             </div>
             <?php endif; ?>
-
-            <hr>
-
-            <div>
-                <?php if($book['available_quantity'] > 0): ?>
-                    <a href="<?= site_url('library/borrow/' . $book['id']) ?>" class="btn btn-primary" onclick="return confirm('Are you sure you want to borrow this book?')">
-                        <i class="bi bi-bookmark-plus"></i> Borrow This Book
-                    </a>
-                <?php else: ?>
-                    <button class="btn btn-secondary" disabled>
-                        <i class="bi bi-bookmark-x"></i> Currently Unavailable
-                    </button>
-                <?php endif; ?>
-            </div>
         </div>
     </div>
 </div>

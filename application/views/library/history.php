@@ -44,9 +44,9 @@
                             <?php endif; ?>
                         </td>
                         <td>
-                            <a href="<?= site_url('library/browse/view/' . $record['book_id']) ?>" class="btn btn-sm btn-info" title="View Book">
+                            <button class="btn btn-sm btn-info view-book-btn" data-book-id="<?= $record['book_id'] ?>" title="View Book">
                                 <i class="bi bi-eye"></i>
-                            </a>
+                            </button>
                             <?php if($record['status'] !== 'returned'): ?>
                                 <button class="btn btn-sm btn-success" onclick="returnBook(<?= $record['id'] ?>)" title="Return Book">
                                     <i class="bi bi-arrow-return-left"></i>
@@ -116,7 +116,100 @@
     <?php endif; ?>
 </div>
 
+<!-- View Book Modal -->
+<div class="modal fade" id="viewBookModal" tabindex="-1" aria-labelledby="viewBookLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white;">
+                <h5 class="modal-title" id="viewBookLabel"><i class="bi bi-book"></i> Book Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="viewBookContent">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle View Book button clicks
+    document.querySelectorAll('.view-book-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const bookId = this.getAttribute('data-book-id');
+            viewBookDetails(bookId);
+        });
+    });
+});
+
+function viewBookDetails(bookId) {
+    const modal = new bootstrap.Modal(document.getElementById('viewBookModal'));
+    const contentDiv = document.getElementById('viewBookContent');
+    
+    fetch('<?= site_url("library/get_book_details_ajax/") ?>' + bookId)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.book) {
+                const book = data.book;
+                contentDiv.innerHTML = `
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Book ID:</th>
+                            <td><strong>#${book.id}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Title:</th>
+                            <td>${book.title}</td>
+                        </tr>
+                        <tr>
+                            <th>Author:</th>
+                            <td>${book.author}</td>
+                        </tr>
+                        <tr>
+                            <th>Publisher:</th>
+                            <td>${book.publisher || '<em class="text-muted">Not provided</em>'}</td>
+                        </tr>
+                        <tr>
+                            <th>Publication Year:</th>
+                            <td>${book.publication_year || '<em class="text-muted">Not provided</em>'}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Copies:</th>
+                            <td>${book.total_quantity}</td>
+                        </tr>
+                        <tr>
+                            <th>Available Copies:</th>
+                            <td><strong class="text-${book.available_quantity > 0 ? 'success' : 'danger'}">${book.available_quantity}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                ${book.available_quantity > 0 ? '<span class="badge bg-success">Available</span>' : '<span class="badge bg-danger">Out of Stock</span>'}
+                            </td>
+                        </tr>
+                        ${book.description ? `<tr><th>Description:</th><td>${book.description}</td></tr>` : ''}
+                    </table>
+                `;
+            } else {
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error loading book details</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading book details</div>';
+            iziToast.error({title: 'Error', message: 'Failed to load book details'});
+        });
+    
+    modal.show();
+}
+
 function returnBook(borrowId) {
     iziToast.show({
         timeout: 20000,

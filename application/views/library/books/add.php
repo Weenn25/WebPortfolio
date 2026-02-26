@@ -63,9 +63,7 @@
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="bi bi-check-circle"></i> Add Book
                     </button>
-                    <a href="<?= site_url('library/books') ?>" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i> Cancel
-                    </a>
+                    
                 </div>
             </form>
         </div>

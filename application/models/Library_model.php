@@ -287,9 +287,14 @@ class Library_model extends CI_Model {
      * Get overdue books
      */
     public function get_overdue_books() {
-        return $this->db->where('return_date <', date('Y-m-d'))
-                        ->where('status !=', 'returned')
-                        ->get('circulation')
+        return $this->db->select('c.*, b.title, m.first_name, m.last_name, m.email')
+                        ->from('circulation c')
+                        ->join('books b', 'c.book_id = b.id')
+                        ->join('members m', 'c.member_id = m.id')
+                        ->where('c.due_date <', date('Y-m-d'))
+                        ->where('c.status', 'borrowed')
+                        ->order_by('c.due_date', 'ASC')
+                        ->get()
                         ->result_array();
     }
 

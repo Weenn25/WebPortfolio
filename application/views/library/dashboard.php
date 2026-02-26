@@ -82,6 +82,58 @@
         </div>
     </div>
 
+    <!-- Overdue Books Section -->
+    <?php if (!empty($overdue_books)): ?>
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header dashboard-card-header bg-danger text-white">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <h5 class="mb-0">Overdue Books (<?= count($overdue_books) ?>)</h5>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Book Title</th>
+                                <th>Member Name</th>
+                                <th>Member Email</th>
+                                <th>Borrow Date</th>
+                                <th>Due Date</th>
+                                <th>Days Overdue</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach($overdue_books as $book): ?>
+                            <tr class="table-danger">
+                                <td><strong><?= htmlspecialchars($book['title']) ?></strong></td>
+                                <td><?= htmlspecialchars($book['first_name'] . ' ' . $book['last_name']) ?></td>
+                                <td><?= htmlspecialchars($book['email']) ?></td>
+                                <td><?= date('M d, Y', strtotime($book['borrow_date'])) ?></td>
+                                <td><?= date('M d, Y', strtotime($book['due_date'])) ?></td>
+                                <td>
+                                    <span class="badge bg-danger">
+                                        <?= (int)((strtotime(date('Y-m-d')) - strtotime($book['due_date'])) / 86400) ?> days
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="<?= site_url('library/circulation') ?>" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Welcome and Info Sections -->
     <div class="row">
         <div class="col-lg-8 mb-4">

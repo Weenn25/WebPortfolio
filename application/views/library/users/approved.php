@@ -63,12 +63,12 @@
                                         <span class="badge bg-success px-3 py-2">Active</span>
                                     </td>
                                     <td class="text-center">
-                                        <a href="<?= site_url('library/deactivate-user/' . $user['id']) ?>" 
-                                           class="btn btn-outline-danger btn-sm"
-                                           onclick="return confirm('Are you sure you want to deactivate this user? They will no longer be able to log in.');"
+                                        <button type="button" class="btn btn-outline-danger btn-sm deactivate-user-btn"
+                                           data-user-id="<?= $user['id'] ?>" 
+                                           data-user-name="<?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>"
                                            title="Deactivate">
                                             <i class="bi bi-person-x"></i> Deactivate
-                                        </a>
+                                        </button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -87,3 +87,32 @@
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle Deactivate User button
+    document.querySelectorAll('.deactivate-user-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+            
+            iziToast.question({
+                timeout: 20000,
+                layout: 2,
+                title: 'Deactivate User',
+                message: 'Are you sure you want to deactivate ' + userName + '? They will no longer be able to log in.',
+                position: 'center',
+                buttons: [
+                    ['<button>OK</button>', function(instance, toast) {
+                        instance.hide({ transitionOut: 'fadeOut' }, toast);
+                        window.location.href = '<?= site_url("library/deactivate-user/") ?>' + userId;
+                    }, true],
+                    ['<button>Cancel</button>', function(instance, toast) {
+                        instance.hide({ transitionOut: 'fadeOut' }, toast);
+                    }]
+                ]
+            });
+        });
+    });
+});
+</script>

@@ -360,25 +360,102 @@
 <body>
     <script>
         // Generate or retrieve unique tab ID for this browser tab
+        // Uses window.name to ensure each tab has its own unique identity
         function getTabId() {
-            let tabId = sessionStorage.getItem('tabId');
-            if (!tabId) {
-                tabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                sessionStorage.setItem('tabId', tabId);
+            // First, check if tab_id is in the URL query string (from login redirect)
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryTabId = urlParams.get('tab_id');
+            
+            if (queryTabId) {
+                // New login - use the tab_id from URL and store it
+                console.log('getTabId: Found in URL:', queryTabId);
+                sessionStorage.setItem('tabId', queryTabId);
+                sessionStorage.setItem('currentTabId', queryTabId);
+                window.name = queryTabId; // Also store in window.name for tab identification
+                
+                // Clean the URL to hide tab_id query parameter from address bar
+                // The tab_id will still work from sessionStorage and window.name
+                // Extract base URL without query string
+                const baseUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, baseUrl);
+                
+                return queryTabId;
             }
-            return tabId;
+            
+            // Check if we have a window.name (unique per browser tab)
+            if (window.name && window.name.startsWith('tab_')) {
+                // This tab already has an identity, use it
+                console.log('getTabId: Found in window.name:', window.name);
+                sessionStorage.setItem('tabId', window.name);
+                sessionStorage.setItem('currentTabId', window.name);
+                return window.name;
+            }
+            
+            // Check sessionStorage (might be from parent tab if copy-pasted URL)
+            let tabId = sessionStorage.getItem('currentTabId') || sessionStorage.getItem('tabId');
+            
+            // If we have a tab_id but window.name is not set, check if this is an orphaned session
+            // (window.name empty on new tab, or first page load of same tab)
+            if (!window.name || !window.name.startsWith('tab_')) {
+                if (tabId && tabId.startsWith('tab_')) {
+                    // We have a valid tab_id from sessionStorage but window.name is not set
+                    // Set window.name to the stored tab_id to restore identity
+                    console.log('getTabId: Restoring from sessionStorage:', tabId);
+                    window.name = tabId;
+                    return tabId;
+                } else {
+                    // No valid tab_id found anywhere - generate a new one
+                    // This should rarely happen unless sessionStorage was cleared
+                    tabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    console.log('getTabId: Generated new tab_id:', tabId);
+                    sessionStorage.setItem('tabId', tabId);
+                    sessionStorage.setItem('currentTabId', tabId);
+                    window.name = tabId;
+                    return tabId;
+                }
+            }
+            
+            return tabId || '';
         }
 
         // Set tab ID immediately and send it with every request
         const tabId = getTabId();
         
-        // Set active role in sessionStorage from URL if present
-        const roleFromUrl = new URLSearchParams(window.location.search).get('active_role');
-        if (roleFromUrl) {
-            sessionStorage.setItem('activeRole', roleFromUrl);
+        // Store tab ID in sessionStorage for sending via headers
+        sessionStorage.setItem('currentTabId', tabId);
+        
+        // Inject tab_id into all library navigation links (so they work for regular GET requests)
+        function injectTabIdToLinks() {
+            document.querySelectorAll('a[href*="library/"]').forEach(link => {
+                // Skip links that already have tab_id, or non-HTTP links
+                if (link.href.includes('tab_id=') || !link.href.startsWith('http')) return;
+                
+                // Add tab_id parameter
+                const separator = link.href.includes('?') ? '&' : '?';
+                link.href += separator + 'tab_id=' + encodeURIComponent(tabId);
+            });
         }
         
-        // Send tab ID with every request via AJAX header override
+        // Inject tab_id on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            injectTabIdToLinks();
+            
+            // Also add a click handler to ensure tab_id is present before navigation
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a[href*="library/"]');
+                if (link && !link.href.includes('tab_id=')) {
+                    // Add tab_id just before click
+                    const separator = link.href.includes('?') ? '&' : '?';
+                    link.href += separator + 'tab_id=' + encodeURIComponent(tabId);
+                }
+            }, true); // Use capture phase to catch click early
+        });
+        
+        // Also inject after delays to catch any dynamically added links
+        setTimeout(function() { injectTabIdToLinks(); }, 300);
+        setTimeout(function() { injectTabIdToLinks(); }, 800);
+        
+        // Send tab ID with every XMLHttpRequest via header
         if (typeof XMLHttpRequest !== 'undefined') {
             const originalOpen = XMLHttpRequest.prototype.open;
             XMLHttpRequest.prototype.open = function() {
@@ -386,11 +463,24 @@
                 this.setRequestHeader('X-Tab-Id', tabId);
             };
         }
+        
+        // Intercept fetch requests to add tab ID header
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            if (args[1] === undefined) {
+                args[1] = {};
+            }
+            if (!args[1].headers) {
+                args[1].headers = {};
+            }
+            args[1].headers['X-Tab-Id'] = tabId;
+            return originalFetch.apply(this, args);
+        };
     </script>
     <!-- Top Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="<?= site_url('library/dashboard?active_role=' . urlencode($this->session->userdata('library_role') ?? 'member')) ?>">
+            <a class="navbar-brand" href="<?= site_url('library/dashboard') ?>">
                 <i class="bi bi-book"></i> Library System
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarNav" aria-controls="sidebarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -404,12 +494,12 @@
                         </span>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= site_url('library/profile?active_role=' . urlencode($this->session->userdata('library_role'))) ?>">
+                        <a class="nav-link" href="<?= site_url('library/profile') ?>">
                             <i class="bi bi-person-circle"></i> Profile
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= site_url('library/logout?active_role=' . urlencode($this->session->userdata('library_role'))) ?>">
+                        <a class="nav-link" href="<?= site_url('library/logout') ?>">
                             <i class="bi bi-box-arrow-right"></i> Logout
                         </a>
                     </li>
@@ -431,7 +521,6 @@
                 <?php 
                 $role = $this->session->userdata('library_role');
                 $is_admin = ($role === 'admin' || $role === 'librarian');
-                $role_param = '?active_role=' . urlencode($role);
                 ?>
                 
                 <li class="nav-item">
@@ -446,19 +535,19 @@
                 <?php if ($is_admin): ?>
                     <!-- Admin Menu -->
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Books Management' ? 'active' : '' ?>" href="<?= site_url('library/books' . $role_param) ?>" title="Books">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Books Management' ? 'active' : '' ?>" href="<?= site_url('library/books') ?>" title="Books">
                             <i class="bi bi-book"></i>
                             <span>Books</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Members Management' ? 'active' : '' ?>" href="<?= site_url('library/members' . $role_param) ?>" title="Members">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Members Management' ? 'active' : '' ?>" href="<?= site_url('library/members') ?>" title="Members">
                             <i class="bi bi-people"></i>
                             <span>Members</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Circulation Management' ? 'active' : '' ?>" href="<?= site_url('library/circulation' . $role_param) ?>" title="Circulation">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Circulation Management' ? 'active' : '' ?>" href="<?= site_url('library/circulation') ?>" title="Circulation">
                             <i class="bi bi-arrow-left-right"></i>
                             <span>Circulation</span>
                         </a>
@@ -467,7 +556,7 @@
                         <?php 
                         $pending_user_count = $this->Library_model->count_pending_users();
                         ?>
-                        <a class="nav-link <?= ($page_title ?? '') === 'Pending User Approvals' || ($page_title ?? '') === 'Approved Users' ? 'active' : '' ?>" href="<?= site_url('library/pending-users' . $role_param) ?>" title="User Approvals">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Pending User Approvals' || ($page_title ?? '') === 'Approved Users' ? 'active' : '' ?>" href="<?= site_url('library/pending-users') ?>" title="User Approvals">
                             <i class="bi bi-person-check"></i>
                             <span>User Approvals
                                 <?php if ($pending_user_count > 0): ?>
@@ -484,13 +573,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'My Borrowed Books' ? 'active' : '' ?>" href="<?= site_url('library/my-books' . $role_param) ?>" title="My Books">
+                        <a class="nav-link <?= ($page_title ?? '') === 'My Borrowed Books' ? 'active' : '' ?>" href="<?= site_url('library/my-books') ?>" title="My Books">
                             <i class="bi bi-bookmark"></i>
                             <span>My Books</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= ($page_title ?? '') === 'Borrowing History' ? 'active' : '' ?>" href="<?= site_url('library/history' . $role_param) ?>" title="History">
+                        <a class="nav-link <?= ($page_title ?? '') === 'Borrowing History' ? 'active' : '' ?>" href="<?= site_url('library/history') ?>" title="History">
                             <i class="bi bi-clock-history"></i>
                             <span>History</span>
                         </a>

@@ -11,7 +11,7 @@
                     <label for="searchInput" class="form-label"><i class="bi bi-search"></i> Search Books</label>
                     <input type="text" class="form-control" id="searchInput" placeholder="Search by title or author..." autocomplete="off">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label for="sortSelect" class="form-label"><i class="bi bi-arrow-down-up"></i> Sort By</label>
                     <select class="form-select" id="sortSelect">
                         <option value="title-asc">Title (A-Z)</option>
@@ -24,11 +24,6 @@
                         <option value="due-farthest">Due Date (Farthest)</option>
                         <option value="status">Status (Active First)</option>
                     </select>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-outline-secondary w-100" id="clearFilters" title="Clear all filters">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reset
-                    </button>
                 </div>
             </div>
             <div class="results-info mt-2">
@@ -84,9 +79,9 @@
                             <?php endif; ?>
                         </td>
                         <td>
-                            <a href="<?= site_url('library/browse/view/' . $borrow['book_id']) ?>" class="btn btn-sm btn-info" title="View Book">
+                            <button class="btn btn-sm btn-info" title="View Book" onclick="viewBookDetails(<?= $borrow['book_id'] ?>)" data-bs-toggle="modal" data-bs-target="#bookDetailsModal">
                                 <i class="bi bi-eye"></i>
-                            </a>
+                            </button>
                             <?php if($borrow['status'] !== 'returned'): ?>
                                 <button class="btn btn-sm btn-success" title="Return Book" onclick="returnBook(<?= $borrow['id'] ?>)">
                                     <i class="bi bi-arrow-return-left"></i> Return
@@ -102,6 +97,25 @@
             <i class="bi bi-info-circle"></i> You haven't borrowed any books yet. <a href="<?= site_url('library/browse') ?>">Browse available books</a> to get started.
         </div>
     <?php endif; ?>
+</div>
+
+<!-- Book Details Modal -->
+<div class="modal fade" id="bookDetailsModal" tabindex="-1" aria-labelledby="bookDetailsModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="bookDetailsModalLabel"><i class="bi bi-book"></i> Book Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBookContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -142,7 +156,6 @@ function returnBook(borrowId) {
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const sortSelect = document.getElementById('sortSelect');
-    const clearButton = document.getElementById('clearFilters');
     const booksTable = document.getElementById('booksTable');
     const bookRows = document.querySelectorAll('.book-row');
     const resultCount = document.getElementById('resultCount');
@@ -215,13 +228,70 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sortSelect) {
         sortSelect.addEventListener('change', filterAndSort);
     }
-    
-    if (clearButton) {
-        clearButton.addEventListener('click', function() {
-            searchInput.value = '';
-            sortSelect.value = 'title-asc';
-            filterAndSort();
-        });
-    }
 });
+
+// Function to display book details in modal
+function viewBookDetails(bookId) {
+    const modalContent = document.getElementById('modalBookContent');
+    
+    // Show loading spinner
+    modalContent.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+    
+    // Fetch book details via AJAX
+    fetch('<?= site_url("library/get_book_details/") ?>' + bookId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const book = data.book;
+                let html = `
+                    <div class="book-details-content">
+                        <h4 class="mb-3">${book.title}</h4>
+                        <hr>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Author:</strong><br>${book.author}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Publisher:</strong><br>${book.publisher || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Publication Year:</strong><br>${book.publication_year || 'N/A'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Total Quantity:</strong><br>${book.total_quantity}</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Available:</strong><br>
+                                    <span class="badge ${book.available_quantity > 0 ? 'bg-success' : 'bg-danger'}">
+                                        ${book.available_quantity} copies
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        ${book.description ? `
+                            <hr>
+                            <p><strong>Description:</strong></p>
+                            <p>${book.description}</p>
+                        ` : ''}
+                    </div>
+                `;
+                modalContent.innerHTML = html;
+            } else {
+                modalContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Error loading book details</div>';
+            }
+        })
+        .catch(error => {
+            modalContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Error: ' + error.message + '</div>';
+        });
+}
 </script>

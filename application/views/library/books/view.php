@@ -3,9 +3,9 @@
         <h1><i class="bi bi-book"></i> Book Details</h1>
         <div>
             <?php if ($book['archived']): ?>
-                <a href="<?= site_url('library/books/restore/' . $book['id']) ?>" class="btn btn-success" onclick="return confirm('Are you sure you want to restore this book?')">
+                <button class="btn btn-success" onclick="restoreBook(<?= $book['id'] ?>)">
                     <i class="bi bi-arrow-counterclockwise"></i> Restore Book
-                </a>
+                </button>
             <?php else: ?>
                 <a href="<?= site_url('library/books/edit/' . $book['id']) ?>" class="btn btn-warning">
                     <i class="bi bi-pencil"></i> Edit Book
@@ -104,3 +104,39 @@
         </div>
     </div>
 </div>
+
+<script>
+function restoreBook(bookId) {
+    iziToast.show({
+        timeout: 20000,
+        layout: 2,
+        title: '<i class="bi bi-arrow-counterclockwise"></i> Restore Book',
+        message: 'Are you sure you want to restore this book?',
+        position: 'center',
+        backgroundColor: '#3498db',
+        titleColor: '#fff',
+        messageColor: '#fff',
+        titleFontSize: '18px',
+        messageFontSize: '15px',
+        padding: '20px',
+        progressBar: true,
+        progressBarColor: '#fff',
+        icon: false,
+        maxWidth: '500px',
+        animateInside: true,
+        transitionIn: 'fadeInDown',
+        transitionOut: 'fadeOutUp',
+        zindex: 9999,
+        overlay: true,
+        buttons: [
+            ['<button class="btn btn-light btn-sm" style="font-weight: 600; padding: 10px 24px; border: none; cursor: pointer; touch-action: auto;"><i class="bi bi-check-circle"></i> YES, RESTORE</button>', function(instance, toast) {
+                instance.hide({ transitionOut: 'fadeOut' }, toast);
+                window.location.href = '<?= site_url("library/books/restore/") ?>' + bookId;
+            }, true],
+            ['<button class="btn btn-outline-light btn-sm" style="font-weight: 600; padding: 10px 24px; border-width: 2px; cursor: pointer; touch-action: auto;"><i class="bi bi-x-circle"></i> CANCEL</button>', function(instance, toast) {
+                instance.hide({ transitionOut: 'fadeOut' }, toast);
+            }]
+        ]
+    });
+}
+</script>

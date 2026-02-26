@@ -48,6 +48,7 @@ $route['library/browse/view/(:num)'] = 'library/browse_book_details/$1';
 $route['library/get_book_details/(:num)'] = 'library/get_book_details/$1';
 $route['library/my-books'] = 'library/my_books';
 $route['library/history'] = 'library/history';
+$route['library/borrow/(:num)/(:num)'] = 'library/borrow_book/$1/$2';
 $route['library/borrow/(:num)'] = 'library/borrow_book/$1';
 $route['library/return/(:num)'] = 'library/return_book/$1';
 $route['library/clear-fine/(:num)'] = 'library/clear_fine/$1';

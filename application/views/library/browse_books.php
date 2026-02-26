@@ -118,6 +118,39 @@
     </div>
 </div>
 
+<!-- Borrow Duration Modal -->
+<div class="modal fade" id="borrowDurationModal" tabindex="-1" aria-labelledby="borrowDurationModalLabel">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="borrowDurationModalLabel"><i class="bi bi-bookmark-plus"></i> Borrow Book</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="borrowBookId" value="">
+                <p class="mb-3">How many days would you like to borrow this book?</p>
+                <div class="mb-3">
+                    <label for="borrowDays" class="form-label fw-bold">Number of Days</label>
+                    <input type="number" class="form-control form-control-lg" id="borrowDays" min="1" max="14" value="14" placeholder="Enter number of days" inputmode="numeric">
+                </div>
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <div>
+                        <strong>Due Date:</strong> <span id="calculatedDueDate"></span><br>
+                        <small class="text-muted">Books returned after the due date will be marked as overdue.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmBorrowBtn">
+                    <i class="bi bi-check-circle"></i> Confirm Borrow
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function showBookDetails(bookId) {
     const modalContent = document.getElementById('modalBookContent');
@@ -170,38 +203,94 @@ if (document.getElementById('bookDetailsModal')) {
 }
 
 function borrowBook(bookId) {
-    iziToast.show({
-        timeout: 20000,
-        layout: 2,
-        title: '<i class="bi bi-bookmark-plus"></i> Borrow Book',
-        message: 'Are you sure you want to borrow this book?',
-        position: 'center',
-        backgroundColor: '#3498db',
-        titleColor: '#fff',
-        messageColor: '#fff',
-        titleFontSize: '18px',
-        messageFontSize: '15px',
-        padding: '20px',
-        progressBar: true,
-        progressBarColor: '#fff',
-        icon: false,
-        maxWidth: '500px',
-        animateInside: true,
-        transitionIn: 'fadeInDown',
-        transitionOut: 'fadeOutUp',
-        zindex: 9999,
-        overlay: true,
-        buttons: [
-            ['<button class="btn btn-light btn-sm" style="font-weight: 600; padding: 10px 24px; border: none; cursor: pointer; touch-action: auto;"><i class="bi bi-check-circle"></i> YES, BORROW</button>', function(instance, toast) {
-                instance.hide({ transitionOut: 'fadeOut' }, toast);
-                window.location.href = '<?= site_url("library/borrow/") ?>' + bookId;
-            }, true],
-            ['<button class="btn btn-outline-light btn-sm" style="font-weight: 600; padding: 10px 24px; border-width: 2px; cursor: pointer; touch-action: auto;"><i class="bi bi-x-circle"></i> CANCEL</button>', function(instance, toast) {
-                instance.hide({ transitionOut: 'fadeOut' }, toast);
-            }]
-        ]
-    });
+    // Set the book ID in the modal
+    document.getElementById('borrowBookId').value = bookId;
+    
+    // Reset to default 14 days
+    document.getElementById('borrowDays').value = 14;
+    
+    // Calculate and display the initial due date
+    updateDueDate();
+    
+    // Show the borrow duration modal
+    const modal = new bootstrap.Modal(document.getElementById('borrowDurationModal'));
+    modal.show();
 }
+
+function updateDueDate() {
+    let daysValue = document.getElementById('borrowDays').value;
+    
+    // Allow empty field (for user to clear and retype)
+    if (daysValue === '' || daysValue === null) {
+        document.getElementById('calculatedDueDate').textContent = 'Please enter a number';
+        return;
+    }
+    
+    let days = parseInt(daysValue);
+    
+    // Validate and constrain days (1-14)
+    if (isNaN(days) || days < 1) {
+        days = 1;
+    } else if (days > 14) {
+        days = 14;
+        document.getElementById('borrowDays').value = 14;
+    }
+    
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + days);
+    
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('calculatedDueDate').textContent = dueDate.toLocaleDateString('en-US', options);
+}
+
+// Update due date when input changes
+document.addEventListener('DOMContentLoaded', function() {
+    const borrowDaysInput = document.getElementById('borrowDays');
+    if (borrowDaysInput) {
+        // Update on input change (allows deletion)
+        borrowDaysInput.addEventListener('input', function() {
+            // Allow numbers and empty value
+            if (this.value === '' || /^\d+$/.test(this.value)) {
+                updateDueDate();
+            } else {
+                // If non-numeric, clear it
+                this.value = '';
+                document.getElementById('calculatedDueDate').textContent = 'Please enter a number';
+            }
+        });
+    }
+    
+    // Handle confirm borrow button
+    const confirmBorrowBtn = document.getElementById('confirmBorrowBtn');
+    if (confirmBorrowBtn) {
+        confirmBorrowBtn.addEventListener('click', function() {
+            const bookId = document.getElementById('borrowBookId').value;
+            let daysValue = document.getElementById('borrowDays').value;
+            
+            // Check if empty
+            if (daysValue === '' || daysValue === null) {
+                alert('Please enter the number of days');
+                return;
+            }
+            
+            let days = parseInt(daysValue);
+            
+            // Final validation
+            if (isNaN(days) || days < 1) {
+                days = 1;
+            } else if (days > 14) {
+                days = 14;
+            }
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('borrowDurationModal'));
+            modal.hide();
+            
+            // Redirect to borrow with days parameter
+            window.location.href = '<?= site_url("library/borrow/") ?>' + bookId + '/' + days;
+        });
+    }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     const sortSelect = document.getElementById('sortSelect');

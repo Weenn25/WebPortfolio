@@ -2,55 +2,17 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= base_url('assets/js/library-script.js') ?>"></script>
     <script>
-        // Get tab ID from header script
+        // Get tab ID from sessionStorage
         function getTabId() {
-            let tabId = sessionStorage.getItem('tabId');
+            let tabId = sessionStorage.getItem('currentTabId');
             if (!tabId) {
-                tabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                sessionStorage.setItem('tabId', tabId);
+                tabId = sessionStorage.getItem('tabId');
             }
-            return tabId;
+            return tabId || '';
         }
 
-        // Determine active role from current context and sessionStorage
-        function getActiveRoleFromContext() {
-            // Check sessionStorage first (set during each page load)
-            const storedRole = sessionStorage.getItem('activeRole');
-            if (storedRole) {
-                return storedRole;
-            }
-            
-            // Fallback: get from current page context
-            const role = document.body.getAttribute('data-active-role');
-            if (role) {
-                sessionStorage.setItem('activeRole', role);
-                return role;
-            }
-            
-            return null;
-        }
-
-        // Inject tab_id and active_role parameters into all internal links on page load
-        function injectParametersInAllLinks() {
-            const activeRole = getActiveRoleFromContext();
-            const tabId = getTabId();
-            
-            document.querySelectorAll('a[href*="library/"]').forEach(link => {
-                // Skip if already has parameters
-                if (link.href.includes('tab_id=')) return;
-                
-                // Add tab_id and active_role to all library links
-                const separator = link.href.includes('?') ? '&' : '?';
-                link.href += separator + 'tab_id=' + encodeURIComponent(tabId);
-                if (activeRole) {
-                    link.href += '&active_role=' + encodeURIComponent(activeRole);
-                }
-            });
-        }
-
-        // Intercept form submissions to add tab_id and active_role
+        // Intercept form submissions to add tab_id
         function interceptFormSubmissions() {
-            const activeRole = getActiveRoleFromContext();
             const tabId = getTabId();
             
             document.querySelectorAll('form').forEach(form => {
@@ -61,22 +23,13 @@
                         hasTabId = true;
                     });
                     
-                    if (!hasTabId) {
+                    if (!hasTabId && tabId) {
                         // Add hidden input for tab_id
                         const tabInput = document.createElement('input');
                         tabInput.type = 'hidden';
                         tabInput.name = 'tab_id';
                         tabInput.value = tabId;
                         this.appendChild(tabInput);
-                        
-                        // Add hidden input for active_role
-                        if (activeRole) {
-                            const roleInput = document.createElement('input');
-                            roleInput.type = 'hidden';
-                            roleInput.name = 'active_role';
-                            roleInput.value = activeRole;
-                            this.appendChild(roleInput);
-                        }
                     }
                 });
             });
@@ -84,13 +37,11 @@
 
         // Run on page load
         document.addEventListener('DOMContentLoaded', function() {
-            injectParametersInAllLinks();
             interceptFormSubmissions();
         });
 
-        // Also run after small delay to catch dynamically added elements
+        // Also run after small delay to catch dynamically added forms
         setTimeout(function() {
-            injectParametersInAllLinks();
             interceptFormSubmissions();
         }, 500);
 

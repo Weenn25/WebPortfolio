@@ -79,9 +79,10 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-login">
-                        <span>Login</span>
+                    <button type="submit" class="btn btn-primary btn-login" id="loginBtn">
+                        <span id="loginBtnText">Login</span>
                         <i class="bi bi-arrow-right-circle"></i>
+                        <span id="loginSpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
                     </button>
                 </form>
 
@@ -114,18 +115,32 @@
         }
 
         // Generate unique tab ID for this login session
+        // IMPORTANT: Always generate a fresh tab_id on login page to prevent conflicts
+        // when opening new tabs from existing ones (sessionStorage gets copied)
+        // Generate ONCE and return the same ID on subsequent calls to avoid mismatches
+        let _generatedTabId = null; // Cache to ensure same tab_id is used throughout login
+        
         function getTabId() {
-            let tabId = sessionStorage.getItem('tabId');
-            if (!tabId) {
-                tabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                sessionStorage.setItem('tabId', tabId);
+            if (_generatedTabId) {
+                // Return cached tab_id to ensure consistency
+                return _generatedTabId;
             }
-            return tabId;
+            
+            // Generate a completely new tab_id for this login attempt
+            _generatedTabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('tabId', _generatedTabId);
+            sessionStorage.setItem('currentTabId', _generatedTabId);
+            window.name = _generatedTabId;
+            return _generatedTabId;
         }
 
         // Add tab ID to login form before submission
         document.addEventListener('DOMContentLoaded', function() {
             const loginForm = document.querySelector('form');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            
             if (loginForm) {
                 loginForm.addEventListener('submit', function(e) {
                     // Check if tab_id field already exists
@@ -138,12 +153,33 @@
                         const tabIdInput = document.createElement('input');
                         tabIdInput.type = 'hidden';
                         tabIdInput.name = 'tab_id';
-                        tabIdInput.value = getTabId();
+                        tabIdInput.value = getTabId();  // Use cached tab_id
                         this.appendChild(tabIdInput);
                     }
+                    
+                    // Show loading spinner
+                    loginBtnText.style.display = 'none';
+                    loginSpinner.style.display = 'inline-block';
+                    loginBtn.disabled = true;
                 });
             }
         });
+
+        // Intercept all fetch requests to add tab ID header
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            const tabId = sessionStorage.getItem('currentTabId');
+            if (tabId) {
+                if (args[1] === undefined) {
+                    args[1] = {};
+                }
+                if (!args[1].headers) {
+                    args[1].headers = {};
+                }
+                args[1].headers['X-Tab-Id'] = tabId;
+            }
+            return originalFetch.apply(this, args);
+        };
 
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -168,6 +204,15 @@
             const errorMsg = document.getElementById('errorMessage').textContent.trim();
             if (errorMsg) {
                 showNotification(errorMsg, 'error');
+                // If there's an error, hide spinner and re-enable button
+                const loginBtn = document.getElementById('loginBtn');
+                const loginBtnText = document.getElementById('loginBtnText');
+                const loginSpinner = document.getElementById('loginSpinner');
+                if (loginBtn) {
+                    loginBtnText.style.display = 'inline';
+                    loginSpinner.style.display = 'none';
+                    loginBtn.disabled = false;
+                }
             }
         });
     </script>

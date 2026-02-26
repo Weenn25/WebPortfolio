@@ -86,17 +86,47 @@ class Library extends CI_Controller {
         $tab_id = $this->getTabId();
         
         if ($tab_id) {
-            // Sync library_* variables with this tab's session data
-            $tab_data = $this->getTabSessionData($tab_id);
-            if (!empty($tab_data)) {
+            // We have a tab_id from the request, use it
+            // Method 1: Try direct session keys first (most reliable)
+            $user_id = $this->session->userdata('library_tab_' . $tab_id . '_user_id');
+            $username = $this->session->userdata('library_tab_' . $tab_id . '_username');
+            $role = $this->session->userdata('library_tab_' . $tab_id . '_role');
+            
+            if ($user_id && $username && $role) {
+                // Found user data in direct session keys
                 $this->session->set_userdata([
-                    'library_user_id' => $tab_data['user_id'] ?? null,
-                    'library_username' => $tab_data['username'] ?? null,
-                    'library_role' => $tab_data['role'] ?? null
+                    'library_user_id' => $user_id,
+                    'library_username' => $username,
+                    'library_role' => $role,
+                    'library_current_tab' => $tab_id  // Store current tab for future reference
                 ]);
             } else {
-                // No session for this tab, clear library variables
-                $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role']);
+                // Method 2: Fallback to tab_sessions array lookup
+                $tab_data = $this->getTabSessionData($tab_id);
+                if (!empty($tab_data)) {
+                    $this->session->set_userdata([
+                        'library_user_id' => $tab_data['user_id'] ?? null,
+                        'library_username' => $tab_data['username'] ?? null,
+                        'library_role' => $tab_data['role'] ?? null,
+                        'library_current_tab' => $tab_id  // Store current tab for future reference
+                    ]);
+                } else {
+                    // No session for this tab, clear library variables
+                    $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role']);
+                }
+            }
+        } else {
+            // No tab_id in request - try to recover from previous tab or session
+            $current_user_id = $this->session->userdata('library_user_id');
+            $current_tab = $this->session->userdata('library_current_tab');
+            
+            if ($current_user_id) {
+                // User is already logged in this session, preserve the session data
+                // This handles cases where tab_id is temporarily missing (e.g., manual URL edits)
+                // Keep existing library_* variables as-is
+            } else {
+                // No valid session or tab_id, clear library variables
+                $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role', 'library_current_tab']);
             }
         }
         
@@ -190,49 +220,22 @@ class Library extends CI_Controller {
     // }
 
     /**
-     * Helper method to maintain library_* variables based on determined active role
-     * This ensures each tab/session maintains its own active user context
-     */
-    private function syncActiveSessionByRole($active_role) {
-        if ($active_role === 'admin') {
-            $admin_id = $this->session->userdata('admin_user_id');
-            if ($admin_id) {
-                $this->session->set_userdata([
-                    'library_user_id' => $admin_id,
-                    'library_username' => $this->session->userdata('admin_username'),
-                    'library_role' => $this->session->userdata('admin_role')
-                ]);
-                return;
-            }
-        } else if ($active_role === 'member') {
-            $member_id = $this->session->userdata('member_user_id');
-            if ($member_id) {
-                $this->session->set_userdata([
-                    'library_user_id' => $member_id,
-                    'library_username' => $this->session->userdata('member_username'),
-                    'library_role' => $this->session->userdata('member_role')
-                ]);
-                return;
-            }
-        }
-        
-        // Fallback: no active role set, clear library variables
-        $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role']);
-    }
-
-    /**
      * Dashboard - restricted to logged in users
      */
     public function dashboard() {
-        $admin_id = $this->session->userdata('admin_user_id');
-        $member_id = $this->session->userdata('member_user_id');
-        $admin_role = $this->session->userdata('admin_role');
-        $member_role = $this->session->userdata('member_role');
+        // Use only tab-specific library_* variables for user context
+        // These are synced per tab via _remap to prevent multi-user conflicts
+        $library_user_id = $this->session->userdata('library_user_id');
+        $library_role = $this->session->userdata('library_role');
         
-        // Check which role is logged in
-        if ($admin_id && $admin_role && ($admin_role === 'admin' || $admin_role === 'librarian')) {
+        // Redirect based on the current tab's user role
+        if (!$library_user_id || !$library_role) {
+            redirect('library/login');
+        }
+        
+        if ($library_role === 'admin' || $library_role === 'librarian') {
             redirect('library/admin-dashboard');
-        } else if ($member_id && $member_role === 'member') {
+        } else if ($library_role === 'member') {
             redirect('library/user-dashboard');
         } else {
             redirect('library/login');
@@ -243,19 +246,18 @@ class Library extends CI_Controller {
      * Admin Dashboard
      */
     public function admin_dashboard() {
-        $admin_id = $this->session->userdata('admin_user_id');
-        $admin_role = $this->session->userdata('admin_role');
+        // Use only tab-specific library_* variables for user context
+        $library_user_id = $this->session->userdata('library_user_id');
+        $library_role = $this->session->userdata('library_role');
         
-        if (!$admin_id || !($admin_role === 'admin' || $admin_role === 'librarian')) {
+        if (!$library_user_id || !($library_role === 'admin' || $library_role === 'librarian')) {
             redirect('library/login');
         }
-
-        // If member is also logged in, allow access to admin dashboard
-        $member_id = $this->session->userdata('member_user_id');
 
         $data['page_title'] = 'Dashboard';
         $data['stats'] = $this->Library_model->get_dashboard_stats();
         $data['pending_count'] = $this->Library_model->count_pending_users();
+        $data['overdue_books'] = $this->Library_model->get_overdue_books();
         
         $this->load->view('library/templates/header', $data);
         $this->load->view('library/dashboard', $data);
@@ -266,20 +268,15 @@ class Library extends CI_Controller {
      * User Dashboard
      */
     public function user_dashboard() {
-        $member_id = $this->session->userdata('member_user_id');
-        $member_role = $this->session->userdata('member_role');
+        // Use only tab-specific library_* variables for user context
+        $library_user_id = $this->session->userdata('library_user_id');
+        $library_role = $this->session->userdata('library_role');
         
-
-        
-        
-        if (!$member_id || $member_role !== 'member') {
+        if (!$library_user_id || $library_role !== 'member') {
             redirect('library/login');
         }
 
-        // // If admin is also logged in, allow access to user dashboard
-        // $admin_id = $this->session->userdata('admin_user_id');
-
-        $user_id = $member_id;
+        $user_id = $library_user_id;
         $data['page_title'] = 'My Dashboard';
         $data['user'] = $this->Library_model->get_user($user_id);
         
@@ -323,20 +320,21 @@ class Library extends CI_Controller {
      * Get Book Details (AJAX)
      */
     public function get_book_details($id) {
+        $this->output->set_content_type('application/json');
+        
         if (!$this->session->userdata('library_user_id')) {
-            $this->output->set_content_type('application/json');
             echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-            return;
+            exit;
         }
 
         $book = $this->Library_model->get_book($id);
         
-        $this->output->set_content_type('application/json');
         if ($book) {
             echo json_encode(['success' => true, 'book' => $book]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Book not found']);
         }
+        exit;
     }
 
     /**
@@ -447,7 +445,12 @@ class Library extends CI_Controller {
     /**
      * Borrow a Book
      */
-    public function borrow_book($book_id) {
+    /**
+     * Borrow a Book
+     * @param int $book_id The book ID to borrow
+     * @param int $days Number of days to borrow (default 14)
+     */
+    public function borrow_book($book_id, $days = 14) {
         if (!$this->session->userdata('library_user_id')) {
             redirect('library/login');
         }
@@ -456,6 +459,9 @@ class Library extends CI_Controller {
         if ($role === 'admin' || $role === 'librarian') {
             redirect('library/admin-dashboard');
         }
+
+        // Validate days (minimum 1, maximum 14)
+        $days = max(1, min(14, intval($days)));
 
         $user_id = $this->session->userdata('library_user_id');
         
@@ -506,21 +512,23 @@ class Library extends CI_Controller {
             redirect('library/browse');
         }
 
+        // Calculate due date based on selected days
+        $due_date = date('Y-m-d', strtotime("+{$days} days"));
+
         // Create borrow record
         $borrow_data = array(
             'book_id' => $book_id,
             'member_id' => $member_id,
             'borrow_date' => date('Y-m-d'),
-            'due_date' => date('Y-m-d', strtotime('+14 days')), // 2 weeks loan period
-            'status' => 'borrowed',
-            'fine_amount' => 0.00
+            'due_date' => $due_date,
+            'status' => 'borrowed'
         );
 
         // Use the model's borrow_book method which handles transaction
         $result = $this->Library_model->borrow_book($borrow_data);
 
         if ($result) {
-            $this->session->set_flashdata('success', 'Book borrowed successfully! Due date: ' . date('M d, Y', strtotime('+14 days')));
+            $this->session->set_flashdata('success', 'Book borrowed successfully for ' . $days . ' days! Due date: ' . date('M d, Y', strtotime($due_date)));
             redirect('library/my-books');
         } else {
             $this->session->set_flashdata('error', 'Failed to borrow book. Please try again.');
@@ -652,26 +660,19 @@ class Library extends CI_Controller {
                         
                         // Store session data for this specific tab
                         if ($tab_id) {
+                            // Method 1: Store in tab_sessions array (for convenience)
                             $this->setTabSession($tab_id, 'user_id', $user['id']);
                             $this->setTabSession($tab_id, 'username', $user['username']);
                             $this->setTabSession($tab_id, 'role', $user['role']);
                             
-                            // Set role-specific global session variables for backward compatibility
-                            if ($role === 'admin' || $role === 'librarian') {
-                                $this->session->set_userdata([
-                                    'admin_user_id' => $user['id'],
-                                    'admin_username' => $user['username'],
-                                    'admin_role' => $user['role']
-                                ]);
-                                redirect('library/dashboard?tab_id=' . urlencode($tab_id) . '&active_role=admin');
-                            } else {
-                                $this->session->set_userdata([
-                                    'member_user_id' => $user['id'],
-                                    'member_username' => $user['username'],
-                                    'member_role' => $user['role']
-                                ]);
-                                redirect('library/dashboard?tab_id=' . urlencode($tab_id) . '&active_role=member');
-                            }
+                            // Method 2: Also store directly in session with tab_id as key (for redundancy and reliability)
+                            $this->session->set_userdata('library_tab_' . $tab_id . '_user_id', $user['id']);
+                            $this->session->set_userdata('library_tab_' . $tab_id . '_username', $user['username']);
+                            $this->session->set_userdata('library_tab_' . $tab_id . '_role', $user['role']);
+                            
+                            // The _remap method will sync this to library_* variables per tab before each request
+                            // Include tab_id in the redirect to ensure proper tab identification across navigation
+                            redirect('library/dashboard?tab_id=' . urlencode($tab_id));
                         } else {
                             // Fallback if no tab_id (shouldn't happen with JavaScript)
                             $this->session->set_flashdata('login_error', 'Something went wrong. Please try again.');
@@ -921,41 +922,21 @@ class Library extends CI_Controller {
         $tab_id = $this->getTabId();
         
         if ($tab_id) {
-            // Get the role from this tab before clearing
-            $tab_data = $this->getTabSessionData($tab_id);
-            $role = $tab_data['role'] ?? null;
+            // Clear session data for this specific tab only
+            // Since each tab has independent user context, logout only affects this tab
             
-            // Clear session data for this specific tab
+            // Clear direct session keys
+            $this->session->unset_userdata([
+                'library_tab_' . $tab_id . '_user_id',
+                'library_tab_' . $tab_id . '_username',
+                'library_tab_' . $tab_id . '_role',
+                'library_user_id',
+                'library_username',
+                'library_role'
+            ]);
+            
+            // Also clear from tab_sessions array
             $this->clearTabSession($tab_id);
-            
-            // Check if any other tabs still have sessions for this role
-            $tab_sessions = $this->session->userdata('tab_sessions') ?: [];
-            $has_other_admin = false;
-            $has_other_member = false;
-            
-            foreach ($tab_sessions as $other_tab_id => $other_data) {
-                if ($other_tab_id !== $tab_id && !empty($other_data['role'])) {
-                    if ($other_data['role'] === 'admin' || $other_data['role'] === 'librarian') {
-                        $has_other_admin = true;
-                    } else {
-                        $has_other_member = true;
-                    }
-                }
-            }
-            
-            // Clear global role session variables if no other tabs have that role
-            if ($role === 'admin' || $role === 'librarian') {
-                if (!$has_other_admin) {
-                    $this->session->unset_userdata(['admin_user_id', 'admin_username', 'admin_role']);
-                }
-            } else {
-                if (!$has_other_member) {
-                    $this->session->unset_userdata(['member_user_id', 'member_username', 'member_role']);
-                }
-            }
-            
-            // Clear library_* variables
-            $this->session->unset_userdata(['library_user_id', 'library_username', 'library_role']);
         }
         
         redirect('library/login');
@@ -1259,40 +1240,6 @@ class Library extends CI_Controller {
     }
 
     /**
-     * Update Book
-     */
-    public function update_book($id) {
-        if (!$this->session->userdata('library_user_id')) {
-            redirect('library/login');
-        }
-
-        $role = $this->session->userdata('library_role');
-        if ($role !== 'admin' && $role !== 'librarian') {
-            redirect('library/user-dashboard');
-        }
-
-        if ($this->input->post()) {
-            $data = [
-                'title' => $this->input->post('title'),
-                'author' => $this->input->post('author'),
-                'publisher' => $this->input->post('publisher'),
-                'publication_year' => $this->input->post('publication_year'),
-                'description' => $this->input->post('description'),
-                'total_quantity' => $this->input->post('total_quantity'),
-                'available_quantity' => $this->input->post('available_quantity')
-            ];
-
-            if ($this->Library_model->update_book($id, $data)) {
-                $this->session->set_flashdata('success', 'Book updated successfully');
-            } else {
-                $this->session->set_flashdata('error', 'Failed to update book');
-            }
-        }
-        
-        redirect('library/books');
-    }
-
-    /**
      * Archive Book
      */
     public function archive_book($id) {
@@ -1326,6 +1273,104 @@ class Library extends CI_Controller {
         }
         
         redirect('library/books');
+    }
+
+    
+    /**
+     * AJAX: Get Book Edit Form Data as JSON
+     */
+    public function get_book_edit($id) {
+        $this->output->set_content_type('application/json');
+        
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $book = $this->Library_model->get_book($id);
+        
+        if (!$book) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Book not found'
+            ]);
+            exit;
+        }
+
+        if ($book['archived']) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Cannot edit an archived book. Please restore it first.'
+            ]);
+            exit;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'book' => $book
+        ]);
+        exit;
+    }
+
+    /**
+     * AJAX: Update Book
+     */
+    public function update_book($id = null) {
+        // Don't check is_ajax_request for fetch compatibility, check Content-Type header instead
+        $content_type = $this->input->server('CONTENT_TYPE');
+        
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        if ($this->input->post()) {
+            $book = $this->Library_model->get_book($id);
+            
+            if (!$book) {
+                echo json_encode(['success' => false, 'message' => 'Book not found']);
+                exit;
+            }
+
+            $data = [
+                'title' => $this->input->post('title'),
+                'author' => $this->input->post('author'),
+                'publisher' => $this->input->post('publisher'),
+                'publication_year' => $this->input->post('publication_year'),
+                'description' => $this->input->post('description'),
+                'total_quantity' => $this->input->post('total_quantity'),
+                'available_quantity' => $this->input->post('available_quantity')
+            ];
+
+            if ($this->Library_model->update_book($id, $data)) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Book updated successfully'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to update book'
+                ]);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No data provided']);
+        }
+        exit;
     }
 
     /**
@@ -1622,6 +1667,162 @@ class Library extends CI_Controller {
     }
 
     /**
+     * AJAX: Get Member Details
+     */
+    public function get_member_details($id) {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $member = $this->Library_model->get_member($id);
+        
+        if ($member) {
+            echo json_encode(['success' => true, 'member' => $member]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Member not found']);
+        }
+        exit;
+    }
+
+    /**
+     * AJAX: Get Member for Edit
+     */
+    public function get_member_edit($id) {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $member = $this->Library_model->get_member($id);
+        
+        if ($member) {
+            echo json_encode(['success' => true, 'member' => $member]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Member not found']);
+        }
+        exit;
+    }
+
+    /**
+     * AJAX: Update Member
+     */
+    public function update_member_ajax($id = null) {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $member = $this->Library_model->get_member($id);
+        if (!$member) {
+            echo json_encode(['success' => false, 'message' => 'Member not found']);
+            exit;
+        }
+
+        if ($this->input->post()) {
+            $first_name = trim($this->input->post('first_name'));
+            $last_name = trim($this->input->post('last_name'));
+            $email = trim($this->input->post('email'));
+            $membership_date = $this->input->post('membership_date');
+
+            // Validate required fields
+            if (empty($first_name) || empty($last_name) || empty($membership_date)) {
+                echo json_encode(['success' => false, 'message' => 'First Name, Last Name, and Membership Date are required']);
+                exit;
+            }
+
+            // Check if email exists for another member (if provided)
+            if (!empty($email)) {
+                $existing = $this->Library_model->get_member_by_email_excluding($email, $id);
+                if ($existing) {
+                    echo json_encode(['success' => false, 'message' => 'A member with this email already exists']);
+                    exit;
+                }
+            }
+
+            $data = [
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'email' => $email,
+                'membership_date' => $membership_date
+            ];
+
+            if ($this->Library_model->update_member($id, $data)) {
+                echo json_encode(['success' => true, 'message' => 'Member updated successfully']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to update member']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No data provided']);
+        }
+        exit;
+    }
+
+    /**
+     * AJAX: Deactivate Member
+     */
+    public function deactivate_member_ajax($id) {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        // Check if member exists
+        $member = $this->Library_model->get_member($id);
+        if (!$member) {
+            echo json_encode(['success' => false, 'message' => 'Member not found']);
+            exit;
+        }
+
+        // Check if member has active borrowed books
+        $active_borrows = $this->Library_model->count_active_borrows($id);
+        if ($active_borrows > 0) {
+            echo json_encode(['success' => false, 'message' => "Cannot deactivate this member. They have {$active_borrows} book(s) currently borrowed. Please ensure all books are returned first."]);
+            exit;
+        }
+
+        // Deactivate member
+        if ($this->Library_model->archive_member($id)) {
+            echo json_encode(['success' => true, 'message' => 'Member deactivated successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to deactivate member']);
+        }
+        exit;
+    }
+
+    /**
      * View Inactive Members
      */
     public function inactive_members() {
@@ -1668,6 +1869,198 @@ class Library extends CI_Controller {
             $this->session->set_flashdata('error', 'Failed to activate member');
         }
         redirect('library/members/inactive');
+    }
+
+    /**
+     * AJAX: Get Inactive Members
+     */
+    public function get_inactive_members_ajax() {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $members = $this->Library_model->get_inactive_members();
+        echo json_encode(['success' => true, 'members' => $members]);
+        exit;
+    }
+
+    /**
+     * AJAX: Get Add Member Form
+     */
+    public function get_add_member_form() {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    /**
+     * AJAX: Insert Member
+     */
+    public function insert_member_ajax() {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        if ($this->input->post()) {
+            $first_name = trim($this->input->post('first_name'));
+            $last_name = trim($this->input->post('last_name'));
+            $email = trim($this->input->post('email'));
+            $membership_date = $this->input->post('membership_date');
+            $username = trim($this->input->post('username'));
+            $password = $this->input->post('password');
+            $confirm_password = $this->input->post('confirm_password');
+
+            // Validate required fields
+            if (empty($first_name) || empty($last_name) || empty($membership_date)) {
+                echo json_encode(['success' => false, 'message' => 'First Name, Last Name, and Membership Date are required']);
+                exit;
+            }
+
+            // Validate credentials
+            if (empty($username) || empty($password)) {
+                echo json_encode(['success' => false, 'message' => 'Username and Password are required']);
+                exit;
+            }
+
+            if (empty($email)) {
+                echo json_encode(['success' => false, 'message' => 'Email is required']);
+                exit;
+            }
+
+            if (strlen($password) < 6) {
+                echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters long']);
+                exit;
+            }
+
+            if ($password !== $confirm_password) {
+                echo json_encode(['success' => false, 'message' => 'Passwords do not match']);
+                exit;
+            }
+
+            // Check if email exists (in users or members)
+            $this->db->select('email')->from('users')->where('email', $email);
+            $user_result = $this->db->get()->result();
+            if (!empty($user_result)) {
+                echo json_encode(['success' => false, 'message' => 'Email is already registered']);
+                exit;
+            }
+
+            $existing_member = $this->Library_model->get_member_by_email($email);
+            if ($existing_member) {
+                echo json_encode(['success' => false, 'message' => 'A member with this email already exists']);
+                exit;
+            }
+
+            // Check if username exists
+            $this->db->select('username')->from('users')->where('username', $username);
+            $username_result = $this->db->get()->result();
+            if (!empty($username_result)) {
+                echo json_encode(['success' => false, 'message' => 'Username already exists']);
+                exit;
+            }
+
+            // Hash password
+            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+
+            // Insert user account
+            $user_data = [
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'username' => $username,
+                'email' => $email,
+                'password' => $hashed_password,
+                'role' => 'member',
+                'is_active' => 1,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            if (!$this->db->insert('users', $user_data)) {
+                echo json_encode(['success' => false, 'message' => 'Failed to create user account']);
+                exit;
+            }
+
+            // Insert member record
+            $member_data = [
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'email' => $email,
+                'membership_date' => $membership_date,
+                'is_active' => 1,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            if ($this->Library_model->add_member($member_data)) {
+                echo json_encode(['success' => true, 'message' => 'Member added successfully with account credentials']);
+            } else {
+                // Rollback user creation if member insertion fails
+                $this->db->delete('users', ['username' => $username]);
+                echo json_encode(['success' => false, 'message' => 'Failed to add member']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No data provided']);
+        }
+        exit;
+    }
+
+    /**
+     * AJAX: Activate Member
+     */
+    public function activate_member_ajax($id) {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $role = $this->session->userdata('library_role');
+        if ($role !== 'admin' && $role !== 'librarian') {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $member = $this->Library_model->get_member($id);
+        if (!$member) {
+            echo json_encode(['success' => false, 'message' => 'Member not found']);
+            exit;
+        }
+
+        if ($this->Library_model->activate_member($id)) {
+            echo json_encode(['success' => true, 'message' => 'Member activated successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to activate member']);
+        }
+        exit;
     }
 
     /**
@@ -1964,6 +2357,27 @@ class Library extends CI_Controller {
         }
         
         redirect('library/approved-users');
+    }
+
+    /**
+     * Get Book Details via AJAX (for members and guests)
+     */
+    public function get_book_details_ajax($id) {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('library_user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $book = $this->Library_model->get_book($id);
+        
+        if ($book) {
+            echo json_encode(['success' => true, 'book' => $book]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Book not found']);
+        }
+        exit;
     }
 
 }
